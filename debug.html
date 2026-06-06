@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>デバッグ確認</title>
+<style>
+  body{background:#0a1520;color:#e8f0f8;font-family:sans-serif;padding:20px;font-size:14px;}
+  h2{color:#1db88a;margin-bottom:16px;}
+  #log{background:#132438;border-radius:8px;padding:16px;line-height:2;word-break:break-all;}
+  .ok{color:#1db88a;} .err{color:#e05555;} .info{color:#f0a500;}
+  #svg-test{width:200px;height:200px;border:1px solid #1e3a55;background:#0a1520;display:block;margin-top:12px;}
+  #svg-test path{fill:#1db88a;}
+</style>
+</head>
+<body>
+<h2>🔍 デバッグ確認ページ</h2>
+<div id="log">確認中...</div>
+<svg id="svg-test" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"></svg>
+
+<script>
+const log = document.getElementById('log');
+const svgEl = document.getElementById('svg-test');
+
+function addLine(msg, type='info'){
+  const d = document.createElement('div');
+  d.className = type;
+  d.textContent = msg;
+  log.appendChild(d);
+}
+
+log.textContent = '';
+
+// STEP1: fetch対応確認
+addLine('STEP1: fetchが使えるか確認...','info');
+if(typeof fetch === 'function'){
+  addLine('✅ fetch使用可能','ok');
+} else {
+  addLine('❌ fetchが使えません','err');
+}
+
+// STEP2: japan.topojson読み込み
+addLine('STEP2: japan.topojson を読み込み中...','info');
+fetch('./japan.topojson')
+  .then(res => {
+    addLine(`HTTPステータス: ${res.status} ${res.ok?'OK':'NG'}`, res.ok?'ok':'err');
+    if(!res.ok) throw new Error('HTTPエラー: '+res.status);
+    return res.json();
+  })
+  .then(topo => {
+    addLine('✅ JSONパース成功','ok');
+
+    // STEP3: 構造確認
+    addLine('STEP3: データ構造を確認...','info');
+    addLine('type: ' + topo.type,'info');
+    addLine('transform あり: ' + (!!topo.transform),'info');
+    if(topo.transform){
+      addLine('scale: ' + JSON.stringify(topo.transform.scale),'info');
+      addLine('translate: ' + JSON.stringify(topo.transform.translate),'info');
+    }
+    const objKeys = Object.keys(topo.objects||{});
+    addLine('objects keys: ' + objKeys.join(', '),'info');
+
+    if(objKeys.length > 0){
+      const key = objKeys[0];
+      const geoms = topo.objects[key].geometries || [];
+      addLine(`geometries数: ${geoms.length}件`,'info');
+
+      if(geoms.length > 0){
+        const g0 = geoms[0];
+        addLine('最初のgeometry type: ' + g0.type,'info');
+        addLine('properties: ' + JSON.stringify(g0.properties),'info');
+      }
+    }
+
+    // STEP4: arcs確認
+    addLine('STEP4: arcs確認...','info');
+    addLine('arcs数: ' + (topo.arcs||[]).length,'info');
+    if((topo.arcs||[]).length > 0){
+      addLine('最初のarcの長さ: ' + topo.arcs[0].length,'info');
+      addLine('最初のarcの最初の点: ' + JSON.stringify(topo.arcs[0][0]),'info');
+    }
+
+    // STEP5: 簡易描画テスト
+    addLine('STEP5: 簡易SVG描画テスト...','info');
+    try {
+      const { scale, translate } = topo.transform;
+      const key = Object.keys(topo.objects)[0];
+      const geom = topo.objects[key].geometries[0];
+
+      // 最初のarcだけ使って座標を復元
+      let arcIdx = 0;
+      if(geom.type==='Polygon') arcIdx = geom.arcs[0][0];
+      else if(geom.type==='MultiPolygon') arcIdx = geom.arcs[0][0][0];
+      const rawArc = arcIdx < 0 ? [...topo.arcs[~arcIdx]].reverse() : topo.arcs[arcIdx];
+
+      let x=0, y=0;
+      const pts = rawArc.map(([dx,dy])=>{x+=dx;y+=dy;return[x*scale[0]+translate[0],y*scale[1]+translate[1]];});
+
+      addLine(`座標例(最初の点): lng=${pts[0][0].toFixed(4)}, lat=${pts[0][1].toFixed(4)}`,'info');
+
+      // Y軸反転して正規化
+      const minX=Math.min(...pts.map(p=>p[0]));
+      const maxX=Math.max(...pts.map(p=>p[0]));
+      const minY=Math.min(...pts.map(p=>p[1]));
+      const maxY=Math.max(...pts.map(p=>p[1]));
+      const cx=(minX+maxX)/2, cy=(minY+maxY)/2;
+      const flipped = pts.map(([px,py])=>[px, cy*2-py]);
+
+      const d = 'M'+flipped.map((p,i)=>(i===0?'':' L')+p[0].toFixed(4)+','+p[1].toFixed(4)).join('')+'Z';
+      const vb = `${(minX-1).toFixed(2)} ${(minY-1).toFixed(2)} ${(maxX-minX+2).toFixed(2)} ${(maxY-minY+2).toFixed(2)}`;
+
+      svgEl.setAttribute('viewBox', vb);
+      svgEl.innerHTML = `<path d="${d}"/>`;
+      addLine('✅ SVG描画テスト完了 → 下の四角に何か表示されていますか？','ok');
+    } catch(e2){
+      addLine('❌ SVG描画エラー: '+e2.message,'err');
+    }
+  })
+  .catch(err => {
+    addLine('❌ 読み込みエラー: ' + err.message,'err');
+    addLine('→ japan.topojson が同じフォルダにない可能性があります','err');
+  });
+</script>
+</body>
+</html>
