@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#0f1923">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>都道府県別シルエットクイズ</title>
 <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
@@ -14,7 +13,6 @@
     --bg:#0a1520;--surface:#0f1e2e;--card:#132438;
     --accent:#1db88a;--accent2:#f0a500;--wrong:#e05555;
     --text:#e8f0f8;--muted:#6a8aaa;--border:#1e3a55;
-    --shadow:0 8px 32px rgba(0,0,0,0.5);
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;overflow-x:hidden;}
@@ -49,7 +47,7 @@
   #question-heading{font-size:clamp(.85rem,3.5vw,1rem);color:var(--muted);letter-spacing:.03em;text-align:center;}
   #quiz-card{
     width:100%;background:var(--card);border:1px solid var(--border);border-radius:20px;
-    padding:16px;box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,0.05);
+    padding:16px;box-shadow:0 8px 32px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.05);
     position:relative;overflow:hidden;
   }
   #quiz-card::before{
@@ -61,19 +59,14 @@
     background:rgba(10,21,32,0.6);border-radius:12px;border:1px solid rgba(30,58,85,0.5);
     position:relative;overflow:hidden;
   }
-  #silhouette-frame::after{
-    content:'';position:absolute;inset:0;
-    background:radial-gradient(ellipse at center,rgba(29,184,138,0.04) 0%,transparent 70%);
-    pointer-events:none;
-  }
   #silhouette-svg{width:88%;height:88%;display:none;}
   #silhouette-svg path{
     fill:var(--accent);opacity:.85;
     filter:drop-shadow(0 0 6px rgba(29,184,138,0.5));
     transition:fill .4s,opacity .4s,filter .4s;
   }
-  #silhouette-svg.correct path{fill:var(--accent);opacity:1;filter:drop-shadow(0 0 18px rgba(29,184,138,0.95));}
-  #silhouette-svg.wrong path{fill:var(--wrong);opacity:1;filter:drop-shadow(0 0 16px rgba(224,85,85,0.85));}
+  #silhouette-svg.correct path{fill:var(--accent);opacity:1;filter:drop-shadow(0 0 20px rgba(29,184,138,0.95));}
+  #silhouette-svg.wrong path{fill:var(--wrong);opacity:1;filter:drop-shadow(0 0 18px rgba(224,85,85,0.85));}
   #loading-area{
     display:flex;flex-direction:column;align-items:center;justify-content:center;
     gap:12px;padding:30px 0;color:var(--muted);font-size:.88rem;
@@ -85,8 +78,7 @@
     align-items:center;justify-content:center;gap:4px;margin-top:10px;
   }
   #feedback-text{
-    font-family:'Kaisei Decol',serif;font-size:1.1rem;font-weight:700;
-    text-align:center;letter-spacing:.05em;
+    font-family:'Kaisei Decol',serif;font-size:1.1rem;font-weight:700;text-align:center;
     opacity:0;transform:translateY(6px);transition:opacity .3s,transform .3s;
   }
   #feedback-text.show{opacity:1;transform:translateY(0);}
@@ -204,70 +196,15 @@
 
 <script>
 // ============================================================
-// TopoJSONデコーダ
-// japan.topojson の構造:
-//   objects.japan.geometries[i].properties.nam_ja = "東京都"
-//   objects.japan.geometries[i].properties.id     = 13（数値）
-//   transform.scale / translate あり（量子化差分座標）
+// japan.topojson の確認済み構造：
+//   transform.scale  = [0.003105..., 0.002513...]
+//   transform.translate = [122.933..., 20.422...]
+//   objects.japan.geometries[i].properties = {nam, nam_ja, id}
+//   座標は量子化差分整数 → scale/translateで経度緯度に変換
+//   経度(lng): 122〜154, 緯度(lat): 20〜46
+//   SVGはY軸が下向きなので緯度は反転必要
 // ============================================================
 
-// 量子化差分座標 → 実座標（経度・緯度）
-function decodeArcs(rawArcs, scale, translate) {
-  return rawArcs.map(arc => {
-    let x = 0, y = 0;
-    return arc.map(([dx, dy]) => {
-      x += dx; y += dy;
-      return [x * scale[0] + translate[0], y * scale[1] + translate[1]];
-    });
-  });
-}
-
-// アーク番号リスト → 座標列
-function resolveRing(indices, arcs) {
-  const pts = [];
-  indices.forEach(idx => {
-    const arc = idx < 0 ? [...arcs[~idx]].reverse() : arcs[idx];
-    arc.forEach((pt, i) => { if (i > 0 || pts.length === 0) pts.push([...pt]); });
-  });
-  return pts;
-}
-
-// ジオメトリ → 座標リング群
-function geomToRings(geom, arcs) {
-  const rings = [];
-  if (!geom) return rings;
-  if (geom.type === 'Polygon') {
-    geom.arcs.forEach(r => rings.push(resolveRing(r, arcs)));
-  } else if (geom.type === 'MultiPolygon') {
-    geom.arcs.forEach(poly => poly.forEach(r => rings.push(resolveRing(r, arcs))));
-  }
-  return rings;
-}
-
-// 座標リング群 → SVGパス文字列
-function ringsToPath(rings) {
-  return rings.map(pts => {
-    if (pts.length < 2) return '';
-    return 'M' + pts.map((p, i) => (i===0?'':' L') + p[0].toFixed(4) + ',' + p[1].toFixed(4)).join('') + 'Z';
-  }).join(' ');
-}
-
-// 座標リング群 → viewBox文字列（余白付き）
-function calcViewBox(rings, padRatio = 0.07) {
-  let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
-  rings.forEach(pts => pts.forEach(([x, y]) => {
-    if (x < minX) minX = x; if (x > maxX) maxX = x;
-    if (y < minY) minY = y; if (y > maxY) maxY = y;
-  }));
-  if (!isFinite(minX)) return '0 0 1 1';
-  const w = maxX - minX, h = maxY - minY;
-  const pad = Math.max(w, h) * padRatio;
-  return `${(minX-pad).toFixed(3)} ${(minY-pad).toFixed(3)} ${(w+pad*2).toFixed(3)} ${(h+pad*2).toFixed(3)}`;
-}
-
-// ============================================================
-// ゲーム状態
-// ============================================================
 let prefData = [];
 let questionOrder = [];
 let currentIndex = 0;
@@ -275,7 +212,6 @@ let answered = false;
 let correctCount = 0;
 let totalAnswered = 0;
 
-// ── TopoJSON ロード ──────────────────────────────────────
 async function loadTopoJSON() {
   const loadEl = document.getElementById('loading-area');
   const errEl  = document.getElementById('error-msg');
@@ -283,51 +219,98 @@ async function loadTopoJSON() {
 
   try {
     const res = await fetch('./japan.topojson');
-    if (!res.ok) throw new Error(`japan.topojson が見つかりません (HTTP ${res.status})`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const topo = await res.json();
 
-    const { scale, translate } = topo.transform;
-    const decodedArcs = decodeArcs(topo.arcs, scale, translate);
+    const sx = topo.transform.scale[0];
+    const sy = topo.transform.scale[1];
+    const tx = topo.transform.translate[0];
+    const ty = topo.transform.translate[1];
 
-    // オブジェクト名を自動検出
-    const objKey = Object.keys(topo.objects)[0];
-    const geometries = topo.objects[objKey].geometries;
+    // 量子化差分座標 → 経度・緯度
+    // 各arcは差分値の配列。累積和してからscale/translateで実座標へ
+    function decodeArc(arc) {
+      let x = 0, y = 0;
+      return arc.map(([dx, dy]) => {
+        x += dx; y += dy;
+        // lng = x*sx + tx, lat = y*sy + ty
+        return [x * sx + tx, y * sy + ty];
+      });
+    }
 
-    // ── 全都道府県の全リングを一括取得してY範囲を計算 ──
-    // （Y軸反転をバラバラに行うと位置がズレるため、
-    //   全体の中心Y値を基準に一括反転する）
-    const allRings = [];
-    geometries.forEach(geom => {
-      geomToRings(geom, decodedArcs).forEach(r => allRings.push(r));
-    });
+    // 全arcをデコード（一度だけ）
+    const arcs = topo.arcs.map(decodeArc);
 
-    let globalMinY = Infinity, globalMaxY = -Infinity;
-    allRings.forEach(pts => pts.forEach(([, y]) => {
-      if (y < globalMinY) globalMinY = y;
-      if (y > globalMaxY) globalMaxY = y;
-    }));
-    const flipY = globalMinY + globalMaxY; // = 2 * 中心Y
+    // アーク番号リスト → 座標列
+    function resolveRing(indices) {
+      const pts = [];
+      for (const idx of indices) {
+        const arc = idx < 0 ? [...arcs[~idx]].reverse() : arcs[idx];
+        for (let i = 0; i < arc.length; i++) {
+          if (i > 0 || pts.length === 0) pts.push(arc[i]);
+        }
+      }
+      return pts;
+    }
 
-    // ── 都道府県ごとにパスとviewBoxを生成 ──
-    prefData = geometries.map(geom => {
-      const props = geom.properties || {};
-      const name  = props.nam_ja || props.name || '';
-      const id    = Number(props.id || 0);
+    // ジオメトリ → 座標リング群（経度・緯度）
+    function geomToRings(geom) {
+      const rings = [];
+      if (geom.type === 'Polygon') {
+        for (const r of geom.arcs) rings.push(resolveRing(r));
+      } else if (geom.type === 'MultiPolygon') {
+        for (const poly of geom.arcs) for (const r of poly) rings.push(resolveRing(r));
+      }
+      return rings;
+    }
+
+    // 経度・緯度リング → SVGパス
+    // lng → x（そのまま）, lat → y（反転：大きいlatが上＝小さいy）
+    // viewBox単位は経度・緯度のまま使用し、Y軸だけ反転
+    function makePathAndViewBox(rings) {
+      // バウンディングボックス
+      let minLng=Infinity, maxLng=-Infinity, minLat=Infinity, maxLat=-Infinity;
+      for (const pts of rings) {
+        for (const [lng, lat] of pts) {
+          if (lng < minLng) minLng = lng; if (lng > maxLng) maxLng = lng;
+          if (lat < minLat) minLat = lat; if (lat > maxLat) maxLat = lat;
+        }
+      }
+      const w = maxLng - minLng, h = maxLat - minLat;
+      const pad = Math.max(w, h) * 0.06;
+
+      // SVGのviewBox: x=minLng-pad, y=-(maxLat+pad), width=w+pad*2, height=h+pad*2
+      // Y軸反転: lat → -lat （SVGはY軸下向きなので緯度を負にすれば北が上）
+      const vbX = (minLng - pad).toFixed(4);
+      const vbY = (-(maxLat + pad)).toFixed(4);
+      const vbW = (w + pad * 2).toFixed(4);
+      const vbH = (h + pad * 2).toFixed(4);
+      const viewBox = `${vbX} ${vbY} ${vbW} ${vbH}`;
+
+      // パス生成（lat を -lat に）
+      const d = rings.map(pts => {
+        if (pts.length < 2) return '';
+        return 'M' + pts.map((p, i) =>
+          (i===0?'':' L') + p[0].toFixed(4) + ',' + (-p[1]).toFixed(4)
+        ).join('') + 'Z';
+      }).join(' ');
+
+      return { d, viewBox };
+    }
+
+    // 都道府県ごとにデータ生成
+    const geoms = topo.objects.japan.geometries;
+    prefData = geoms.map(geom => {
+      const p = geom.properties;
+      const name = p.nam_ja || '';
       if (!name) return null;
-
-      // Y軸反転：y → flipY - y（全体基準）
-      const rings = geomToRings(geom, decodedArcs)
-        .map(pts => pts.map(([x, y]) => [x, flipY - y]));
-
-      return {
-        id,
-        name,
-        pathStr: ringsToPath(rings),
-        viewBox:  calcViewBox(rings)
-      };
+      const rings = geomToRings(geom);
+      if (rings.length === 0) return null;
+      const { d, viewBox } = makePathAndViewBox(rings);
+      return { name, pathStr: d, viewBox };
     }).filter(Boolean);
 
-    if (prefData.length === 0) throw new Error('都道府県データが0件でした');
+    if (prefData.length === 0) throw new Error('データが0件でした');
 
     loadEl.style.display = 'none';
     svgEl.style.display = '';
@@ -336,31 +319,27 @@ async function loadTopoJSON() {
 
   } catch(e) {
     loadEl.style.display = 'none';
-    errEl.innerHTML =
-      `<strong>⚠️ 読み込みエラー</strong><br><br>${e.message}<br><br>` +
-      `japan.topojson が同じフォルダにあるか確認してください。`;
+    errEl.innerHTML = `<strong>⚠️ エラー</strong><br><br>${e.message}<br><br>ページを再読み込みしてください。`;
     errEl.classList.add('show');
   }
 }
 
-// ============================================================
-// ゲームロジック
-// ============================================================
+// ── ゲームロジック ─────────────────────────────
 function shuffle(arr) {
   const a = [...arr];
   for (let i = a.length-1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i+1));
-    [a[i], a[j]] = [a[j], a[i]];
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
   }
   return a;
 }
 
 function startQuiz() {
-  questionOrder = shuffle(prefData.map((_, i) => i));
-  currentIndex = 0; correctCount = 0; totalAnswered = 0; answered = false;
+  questionOrder = shuffle(prefData.map((_,i)=>i));
+  currentIndex=0; correctCount=0; totalAnswered=0; answered=false;
   document.getElementById('result-screen').classList.remove('show');
-  document.getElementById('main').style.display = '';
-  document.getElementById('score-bar').style.display = '';
+  document.getElementById('main').style.display='';
+  document.getElementById('score-bar').style.display='';
   updateScore();
   loadQuestion();
 }
@@ -375,7 +354,7 @@ function loadQuestion() {
   document.getElementById('next-btn').classList.remove('visible');
   const fb = document.getElementById('feedback-text');
   const ar = document.getElementById('answer-reveal');
-  fb.className = ''; ar.classList.remove('show'); ar.textContent = '';
+  fb.className=''; ar.classList.remove('show'); ar.textContent='';
 
   const pref = prefData[questionOrder[currentIndex]];
   const svg  = document.getElementById('silhouette-svg');
@@ -384,10 +363,10 @@ function loadQuestion() {
   svg.className = '';
 
   const correct = pref.name;
-  const wrongs  = shuffle(prefData.map(p => p.name).filter(n => n !== correct)).slice(0, 3);
-  const options = shuffle([correct, ...wrongs]);
+  const wrongs  = shuffle(prefData.map(p=>p.name).filter(n=>n!==correct)).slice(0,3);
+  const options = shuffle([correct,...wrongs]);
 
-  document.querySelectorAll('.opt-btn').forEach((btn, i) => {
+  document.querySelectorAll('.opt-btn').forEach((btn,i) => {
     btn.textContent = options[i];
     btn.disabled = false;
     btn.className = 'opt-btn';
@@ -400,8 +379,8 @@ function loadQuestion() {
 
 function checkAnswer(selected, correct, clickedBtn) {
   if (answered) return;
-  answered = true; totalAnswered++;
-  const isCorrect = selected === correct;
+  answered=true; totalAnswered++;
+  const isCorrect = selected===correct;
   if (isCorrect) correctCount++;
   updateScore();
 
@@ -410,54 +389,52 @@ function checkAnswer(selected, correct, clickedBtn) {
   const ar  = document.getElementById('answer-reveal');
 
   if (isCorrect) {
-    svg.className = 'correct';
-    fb.textContent = '🎉 正解！'; fb.className = 'correct show';
+    svg.className='correct';
+    fb.textContent='🎉 正解！'; fb.className='correct show';
     clickedBtn.classList.add('correct-answer');
   } else {
-    svg.className = 'wrong';
-    fb.textContent = '❌ 不正解…'; fb.className = 'wrong show';
-    ar.textContent = `正解は「${correct}」`; ar.classList.add('show');
+    svg.className='wrong';
+    fb.textContent='❌ 不正解…'; fb.className='wrong show';
+    ar.textContent=`正解は「${correct}」`; ar.classList.add('show');
     clickedBtn.classList.add('wrong-answer');
   }
 
   document.querySelectorAll('.opt-btn').forEach(btn => {
-    btn.disabled = true;
-    if (btn.textContent === correct && !isCorrect) btn.classList.add('correct-answer');
-    else if (btn !== clickedBtn) btn.classList.add('dimmed');
+    btn.disabled=true;
+    if (btn.textContent===correct && !isCorrect) btn.classList.add('correct-answer');
+    else if (btn!==clickedBtn) btn.classList.add('dimmed');
   });
 
-  if (currentIndex < prefData.length - 1) {
+  if (currentIndex < prefData.length-1) {
     document.getElementById('next-btn').classList.add('visible');
   } else {
     setTimeout(showResult, 1400);
   }
 }
 
-document.getElementById('next-btn').addEventListener('click', () => { currentIndex++; loadQuestion(); });
+document.getElementById('next-btn').addEventListener('click', ()=>{currentIndex++;loadQuestion();});
 
 function showResult() {
-  document.getElementById('main').style.display = 'none';
-  document.getElementById('score-bar').style.display = 'none';
-  document.getElementById('rs-correct').textContent = correctCount;
-  document.getElementById('rs-total').textContent = ` / ${prefData.length}`;
-  const rate = correctCount / prefData.length;
-  document.getElementById('result-msg').textContent =
-    rate === 1    ? '完璧です！全問正解、おめでとうございます🎊' :
-    rate >= 0.8   ? '素晴らしい！地理の知識が豊富ですね🌟' :
-    rate >= 0.6   ? 'よくできました！あと少しで全問正解です💪' :
-    rate >= 0.4   ? '半分以上正解！地道に練習しましょう📚' :
-                    '難しかったですね。繰り返し挑戦してみましょう🗾';
+  document.getElementById('main').style.display='none';
+  document.getElementById('score-bar').style.display='none';
+  document.getElementById('rs-correct').textContent=correctCount;
+  document.getElementById('rs-total').textContent=` / ${prefData.length}`;
+  const rate=correctCount/prefData.length;
+  document.getElementById('result-msg').textContent=
+    rate===1    ?'完璧です！全問正解、おめでとうございます🎊':
+    rate>=0.8   ?'素晴らしい！地理の知識が豊富ですね🌟':
+    rate>=0.6   ?'よくできました！あと少しで全問正解です💪':
+    rate>=0.4   ?'半分以上正解！地道に練習しましょう📚':
+                 '難しかったですね。繰り返し挑戦してみましょう🗾';
   document.getElementById('result-screen').classList.add('show');
 }
 
-// ── PWA ──────────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
   });
 }
 
-// ── 起動 ─────────────────────────────────────────────────
 loadTopoJSON();
 </script>
 </body>
