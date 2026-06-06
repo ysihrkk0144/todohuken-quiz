@@ -11,331 +11,166 @@
 <link href="https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0a1520;
-    --surface: #0f1e2e;
-    --card: #132438;
-    --accent: #1db88a;
-    --accent2: #f0a500;
-    --wrong: #e05555;
-    --text: #e8f0f8;
-    --muted: #6a8aaa;
-    --border: #1e3a55;
-    --shadow: 0 8px 32px rgba(0,0,0,0.5);
+    --bg:#0a1520; --surface:#0f1e2e; --card:#132438;
+    --accent:#1db88a; --accent2:#f0a500; --wrong:#e05555;
+    --text:#e8f0f8; --muted:#6a8aaa; --border:#1e3a55;
+    --shadow:0 8px 32px rgba(0,0,0,0.5);
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body {
-    height: 100%;
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Noto Sans JP', sans-serif;
-    overflow-x: hidden;
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{
+    height:100%; background:var(--bg); color:var(--text);
+    font-family:'Noto Sans JP',sans-serif; overflow-x:hidden;
   }
-  body {
-    min-height: 100vh;
+  body{
+    min-height:100vh;
     background:
-      radial-gradient(ellipse at 20% 10%, rgba(29,184,138,0.08) 0%, transparent 60%),
-      radial-gradient(ellipse at 80% 80%, rgba(240,165,0,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse at 20% 10%,rgba(29,184,138,0.08) 0%,transparent 60%),
+      radial-gradient(ellipse at 80% 80%,rgba(240,165,0,0.06) 0%,transparent 60%),
       var(--bg);
   }
-
-  /* ── HEADER ── */
-  #app-header {
-    text-align: center;
-    padding: 18px 16px 0;
+  #app-header{text-align:center;padding:18px 16px 0;}
+  #app-title{
+    font-family:'Kaisei Decol',serif;
+    font-size:clamp(1.2rem,5vw,1.7rem);font-weight:700;
+    letter-spacing:.05em;
+    background:linear-gradient(135deg,#1db88a,#4dd4ac,#f0a500);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    filter:drop-shadow(0 0 12px rgba(29,184,138,0.4));
   }
-  #app-title {
-    font-family: 'Kaisei Decol', serif;
-    font-size: clamp(1.2rem, 5vw, 1.7rem);
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    background: linear-gradient(135deg, #1db88a, #4dd4ac, #f0a500);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    line-height: 1.2;
-    filter: drop-shadow(0 0 12px rgba(29,184,138,0.4));
+  #app-title .icon{font-size:1.3em;margin-right:6px;-webkit-text-fill-color:initial;filter:none;}
+  #score-bar{display:flex;justify-content:flex-start;padding:10px 16px 0;}
+  #score-display{
+    background:var(--card);border:1px solid var(--border);border-radius:20px;
+    padding:5px 14px;font-size:.85rem;color:var(--muted);display:flex;align-items:center;gap:6px;
   }
-  #app-title .icon { font-size: 1.3em; margin-right: 6px; -webkit-text-fill-color: initial; filter: none; }
-
-  /* ── SCORE BAR ── */
-  #score-bar {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    padding: 10px 16px 0;
+  #score-correct{color:var(--accent);font-weight:700;font-size:1rem;}
+  #score-total{color:var(--text);font-weight:700;font-size:1rem;}
+  #score-display .sep{color:var(--border);}
+  #main{
+    display:flex;flex-direction:column;align-items:center;
+    padding:10px 16px 24px;gap:12px;max-width:480px;margin:0 auto;
   }
-  #score-display {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 5px 14px;
-    font-size: 0.85rem;
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    gap: 6px;
+  #question-heading{
+    font-size:clamp(.85rem,3.5vw,1rem);color:var(--muted);
+    letter-spacing:.03em;text-align:center;
   }
-  #score-display .label { color: var(--muted); }
-  #score-correct { color: var(--accent); font-weight: 700; font-size: 1rem; }
-  #score-total { color: var(--text); font-weight: 700; font-size: 1rem; }
-  #score-display .sep { color: var(--border); }
-
-  /* ── MAIN ── */
-  #main {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 10px 16px 24px;
-    gap: 12px;
-    max-width: 480px;
-    margin: 0 auto;
+  #quiz-card{
+    width:100%;background:var(--card);border:1px solid var(--border);
+    border-radius:20px;padding:16px;
+    box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,0.05);
+    position:relative;overflow:hidden;
   }
-
-  /* ── QUESTION HEADING ── */
-  #question-heading {
-    font-size: clamp(0.85rem, 3.5vw, 1rem);
-    color: var(--muted);
-    letter-spacing: 0.03em;
-    text-align: center;
-    line-height: 1.5;
+  #quiz-card::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:2px;
+    background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.6;
   }
-
-  /* ── QUIZ CARD ── */
-  #quiz-card {
-    width: 100%;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 16px;
-    box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,0.05);
-    position: relative;
-    overflow: hidden;
+  #pref-region{font-size:.72rem;color:var(--muted);text-align:center;margin-bottom:8px;letter-spacing:.05em;}
+  #silhouette-frame{
+    width:100%;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;
+    background:rgba(10,21,32,0.6);border-radius:12px;border:1px solid rgba(30,58,85,0.5);
+    position:relative;overflow:hidden;
   }
-  #quiz-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    opacity: 0.6;
+  #silhouette-frame::after{
+    content:'';position:absolute;inset:0;
+    background:radial-gradient(ellipse at center,rgba(29,184,138,0.04) 0%,transparent 70%);
+    pointer-events:none;
   }
-
-  /* ── PREFECTURE NAME HINT ── */
-  #pref-region {
-    font-size: 0.72rem;
-    color: var(--muted);
-    text-align: center;
-    margin-bottom: 8px;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+  #silhouette-svg{width:88%;height:88%;display:none;}
+  #silhouette-svg path{
+    fill:var(--accent);opacity:.85;
+    filter:drop-shadow(0 0 6px rgba(29,184,138,0.5));
+    transition:fill .4s,opacity .4s,filter .4s;
   }
-
-  /* ── SVG FRAME ── */
-  #silhouette-frame {
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(10,21,32,0.6);
-    border-radius: 12px;
-    border: 1px solid rgba(30,58,85,0.5);
-    position: relative;
-    overflow: hidden;
+  #silhouette-svg.correct path{fill:var(--accent);opacity:1;filter:drop-shadow(0 0 18px rgba(29,184,138,0.95));}
+  #silhouette-svg.wrong path{fill:var(--wrong);opacity:1;filter:drop-shadow(0 0 16px rgba(224,85,85,0.85));}
+  #loading-area{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:12px;padding:30px 0;color:var(--muted);font-size:.88rem;
   }
-  #silhouette-frame::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse at center, rgba(29,184,138,0.04) 0%, transparent 70%);
-    pointer-events: none;
+  #error-msg{
+    color:var(--wrong);font-size:.82rem;text-align:center;
+    padding:20px;line-height:1.7;display:none;
   }
-  #silhouette-svg {
-    width: 88%;
-    height: 88%;
-    transition: opacity 0.3s;
+  #error-msg.show{display:block;}
+  #feedback-area{
+    min-height:40px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:4px;margin-top:10px;
   }
-  #silhouette-svg path, #silhouette-svg polygon, #silhouette-svg rect {
-    fill: var(--accent);
-    opacity: 0.85;
-    filter: drop-shadow(0 0 8px rgba(29,184,138,0.5));
-    transition: fill 0.4s, opacity 0.4s;
+  #feedback-text{
+    font-family:'Kaisei Decol',serif;font-size:1.1rem;font-weight:700;
+    text-align:center;letter-spacing:.05em;
+    opacity:0;transform:translateY(6px);transition:opacity .3s,transform .3s;
   }
-  #silhouette-svg.correct path, #silhouette-svg.correct polygon, #silhouette-svg.correct rect {
-    fill: var(--accent);
-    opacity: 1;
-    filter: drop-shadow(0 0 16px rgba(29,184,138,0.9));
+  #feedback-text.show{opacity:1;transform:translateY(0);}
+  #feedback-text.correct{color:var(--accent);}
+  #feedback-text.wrong{color:var(--wrong);}
+  #answer-reveal{font-size:.82rem;color:var(--muted);text-align:center;opacity:0;transition:opacity .3s .15s;}
+  #answer-reveal.show{opacity:1;}
+  #options-grid{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .opt-btn{
+    background:var(--surface);border:1.5px solid var(--border);border-radius:12px;
+    color:var(--text);font-family:'Noto Sans JP',sans-serif;
+    font-size:clamp(.85rem,3.5vw,1rem);font-weight:500;
+    padding:14px 8px;cursor:pointer;text-align:center;
+    transition:background .2s,border-color .2s,transform .1s;
+    -webkit-tap-highlight-color:transparent;min-height:52px;
   }
-  #silhouette-svg.wrong path, #silhouette-svg.wrong polygon, #silhouette-svg.wrong rect {
-    fill: var(--wrong);
-    opacity: 1;
-    filter: drop-shadow(0 0 16px rgba(224,85,85,0.8));
+  .opt-btn:active{transform:scale(0.97);}
+  .opt-btn:disabled{cursor:default;transform:none;}
+  .opt-btn.correct-answer{
+    background:rgba(29,184,138,0.2);border-color:var(--accent);
+    color:var(--accent);box-shadow:0 0 16px rgba(29,184,138,0.25);
   }
-
-  /* ── FEEDBACK ── */
-  #feedback-area {
-    min-height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
+  .opt-btn.wrong-answer{background:rgba(224,85,85,0.15);border-color:var(--wrong);color:var(--wrong);}
+  .opt-btn.dimmed{opacity:.35;}
+  #next-btn{
+    width:100%;background:linear-gradient(135deg,#1db88a,#15976f);
+    border:none;border-radius:14px;color:#fff;
+    font-family:'Kaisei Decol',serif;font-size:1.05rem;font-weight:700;
+    letter-spacing:.08em;padding:16px;cursor:pointer;
+    box-shadow:0 4px 20px rgba(29,184,138,0.35);
+    transition:opacity .2s,transform .15s;display:none;
+    -webkit-tap-highlight-color:transparent;
   }
-  #feedback-text {
-    font-family: 'Kaisei Decol', serif;
-    font-size: 1.1rem;
-    font-weight: 700;
-    text-align: center;
-    letter-spacing: 0.05em;
-    opacity: 0;
-    transform: translateY(6px);
-    transition: opacity 0.3s, transform 0.3s;
+  #next-btn:active{transform:scale(0.98);opacity:.9;}
+  #next-btn.visible{display:block;}
+  #result-screen{
+    display:none;flex-direction:column;align-items:center;gap:20px;
+    text-align:center;padding:32px 16px;max-width:480px;margin:0 auto;
   }
-  #feedback-text.show { opacity: 1; transform: translateY(0); }
-  #feedback-text.correct { color: var(--accent); }
-  #feedback-text.wrong { color: var(--wrong); }
-  #answer-reveal {
-    font-size: 0.82rem;
-    color: var(--muted);
-    text-align: center;
-    opacity: 0;
-    transition: opacity 0.3s 0.15s;
+  #result-screen.show{display:flex;}
+  #result-title{
+    font-family:'Kaisei Decol',serif;font-size:1.8rem;font-weight:700;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
   }
-  #answer-reveal.show { opacity: 1; }
-
-  /* ── OPTIONS ── */
-  #options-grid {
-    width: 100%;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+  #result-score-big{
+    font-family:'Kaisei Decol',serif;font-size:4rem;font-weight:700;
+    color:var(--accent);line-height:1;filter:drop-shadow(0 0 20px rgba(29,184,138,0.5));
   }
-  .opt-btn {
-    background: var(--surface);
-    border: 1.5px solid var(--border);
-    border-radius: 12px;
-    color: var(--text);
-    font-family: 'Noto Sans JP', sans-serif;
-    font-size: clamp(0.85rem, 3.5vw, 1rem);
-    font-weight: 500;
-    padding: 14px 8px;
-    cursor: pointer;
-    text-align: center;
-    transition: background 0.2s, border-color 0.2s, transform 0.1s, box-shadow 0.2s;
-    letter-spacing: 0.02em;
-    position: relative;
-    overflow: hidden;
-    -webkit-tap-highlight-color: transparent;
-    min-height: 52px;
+  #result-score-big span{font-size:1.5rem;color:var(--muted);}
+  #result-msg{font-size:1rem;color:var(--muted);line-height:1.6;}
+  #restart-btn{
+    background:linear-gradient(135deg,var(--accent),#15976f);
+    border:none;border-radius:14px;color:#fff;
+    font-family:'Kaisei Decol',serif;font-size:1.1rem;font-weight:700;
+    letter-spacing:.1em;padding:16px 48px;cursor:pointer;
+    box-shadow:0 4px 24px rgba(29,184,138,0.4);
+    -webkit-tap-highlight-color:transparent;
   }
-  .opt-btn::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.04), transparent);
-    pointer-events: none;
+  @keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+  .fade-in{animation:fadeIn .4s ease both;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .spinner{
+    width:32px;height:32px;border:3px solid var(--border);
+    border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;
   }
-  .opt-btn:active { transform: scale(0.97); }
-  .opt-btn:disabled { cursor: default; transform: none; }
-  .opt-btn.correct-answer {
-    background: rgba(29,184,138,0.2);
-    border-color: var(--accent);
-    color: var(--accent);
-    box-shadow: 0 0 16px rgba(29,184,138,0.25);
+  @keyframes pulse-glow{
+    0%,100%{filter:drop-shadow(0 0 6px rgba(29,184,138,0.5));}
+    50%{filter:drop-shadow(0 0 18px rgba(29,184,138,0.9));}
   }
-  .opt-btn.wrong-answer {
-    background: rgba(224,85,85,0.15);
-    border-color: var(--wrong);
-    color: var(--wrong);
-  }
-  .opt-btn.dimmed {
-    opacity: 0.35;
-  }
-
-  /* ── NEXT BUTTON ── */
-  #next-btn {
-    width: 100%;
-    background: linear-gradient(135deg, #1db88a, #15976f);
-    border: none;
-    border-radius: 14px;
-    color: #fff;
-    font-family: 'Kaisei Decol', serif;
-    font-size: 1.05rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    padding: 16px;
-    cursor: pointer;
-    box-shadow: 0 4px 20px rgba(29,184,138,0.35);
-    transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
-    display: none;
-    -webkit-tap-highlight-color: transparent;
-  }
-  #next-btn:active { transform: scale(0.98); opacity: 0.9; }
-  #next-btn.visible { display: block; }
-
-  /* ── RESULT SCREEN ── */
-  #result-screen {
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-    text-align: center;
-    padding: 32px 16px;
-    max-width: 480px;
-    margin: 0 auto;
-  }
-  #result-screen.show { display: flex; }
-  #result-title {
-    font-family: 'Kaisei Decol', serif;
-    font-size: 1.8rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  #result-score-big {
-    font-family: 'Kaisei Decol', serif;
-    font-size: 4rem;
-    font-weight: 700;
-    color: var(--accent);
-    line-height: 1;
-    filter: drop-shadow(0 0 20px rgba(29,184,138,0.5));
-  }
-  #result-score-big span { font-size: 1.5rem; color: var(--muted); }
-  #result-msg {
-    font-size: 1rem;
-    color: var(--muted);
-    line-height: 1.6;
-  }
-  #restart-btn {
-    background: linear-gradient(135deg, var(--accent), #15976f);
-    border: none;
-    border-radius: 14px;
-    color: #fff;
-    font-family: 'Kaisei Decol', serif;
-    font-size: 1.1rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    padding: 16px 48px;
-    cursor: pointer;
-    box-shadow: 0 4px 24px rgba(29,184,138,0.4);
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  /* ── ANIMATIONS ── */
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  .fade-in { animation: fadeIn 0.4s ease both; }
-
-  @keyframes pulse-glow {
-    0%, 100% { filter: drop-shadow(0 0 8px rgba(29,184,138,0.5)); }
-    50%       { filter: drop-shadow(0 0 20px rgba(29,184,138,0.9)); }
-  }
-  #silhouette-svg { animation: pulse-glow 3s ease-in-out infinite; }
-  #silhouette-svg.correct { animation: none; }
-  #silhouette-svg.wrong   { animation: none; }
+  #silhouette-svg{animation:pulse-glow 3s ease-in-out infinite;}
+  #silhouette-svg.correct,#silhouette-svg.wrong{animation:none;}
 </style>
 </head>
 <body>
@@ -355,433 +190,309 @@
 
 <main id="main">
   <p id="question-heading">このシルエットは、どこの都道府県でしょう？</p>
-
   <div id="quiz-card">
     <div id="pref-region"></div>
     <div id="silhouette-frame">
-      <svg id="silhouette-svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
-      </svg>
+      <div id="loading-area">
+        <div class="spinner"></div>
+        <span>地図データを読み込み中…</span>
+      </div>
+      <div id="error-msg"></div>
+      <svg id="silhouette-svg" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"></svg>
     </div>
-    <div id="feedback-area" style="margin-top:10px;">
+    <div id="feedback-area">
       <div id="feedback-text"></div>
+      <div id="answer-reveal"></div>
     </div>
-    <div id="answer-reveal"></div>
   </div>
-
   <div id="options-grid">
     <button class="opt-btn" id="opt0"></button>
     <button class="opt-btn" id="opt1"></button>
     <button class="opt-btn" id="opt2"></button>
     <button class="opt-btn" id="opt3"></button>
   </div>
-
   <button id="next-btn">次の問題へ ▶</button>
 </main>
 
 <div id="result-screen">
   <div id="result-title">クイズ終了！</div>
-  <div id="result-score-big"><span id="rs-correct">0</span><span> / 47</span></div>
-  <div id="result-msg" id="result-msg"></div>
+  <div id="result-score-big"><span id="rs-correct">0</span><span id="rs-total"> / 47</span></div>
+  <div id="result-msg"></div>
   <button id="restart-btn" onclick="startQuiz()">もう一度挑戦する</button>
 </div>
 
 <script>
-// ─────────────────────────────────────────────
-// 47都道府県 高精度SVGパスデータ
-// viewBox は各都道府県に合わせて最適化済み
-// ─────────────────────────────────────────────
-const PREFECTURES = [
-  {
-    name: "北海道", region: "北海道",
-    viewBox: "0 0 200 160",
-    path: "M 40,10 L 55,8 L 70,12 L 85,10 L 95,15 L 105,10 L 120,12 L 135,8 L 150,12 L 160,20 L 165,30 L 158,38 L 162,45 L 170,50 L 175,60 L 170,70 L 160,75 L 150,72 L 140,78 L 130,85 L 120,82 L 110,88 L 100,92 L 90,90 L 80,95 L 70,90 L 60,88 L 50,92 L 40,88 L 30,80 L 22,70 L 18,58 L 20,45 L 15,35 L 18,25 L 28,15 Z M 12,50 L 8,55 L 5,65 L 8,72 L 15,75 L 20,70 L 22,60 L 18,52 Z M 175,55 L 185,52 L 192,58 L 190,68 L 182,72 L 176,65 Z"
-  },
-  {
-    name: "青森県", region: "東北",
-    viewBox: "0 0 120 100",
-    path: "M 20,20 L 35,15 L 50,12 L 65,15 L 78,12 L 90,18 L 95,28 L 92,38 L 98,45 L 100,55 L 95,62 L 85,65 L 75,60 L 65,65 L 55,68 L 45,65 L 35,68 L 25,62 L 18,52 L 15,40 L 18,30 Z M 85,20 L 95,18 L 100,25 L 98,32 L 90,35 L 82,30 Z"
-  },
-  {
-    name: "岩手県", region: "東北",
-    viewBox: "0 0 100 140",
-    path: "M 30,10 L 45,8 L 58,12 L 68,10 L 75,18 L 78,28 L 82,38 L 80,50 L 78,62 L 80,75 L 78,88 L 72,98 L 65,105 L 55,108 L 45,105 L 35,100 L 28,90 L 22,78 L 18,65 L 20,52 L 18,40 L 20,28 L 25,18 Z"
-  },
-  {
-    name: "宮城県", region: "東北",
-    viewBox: "0 0 110 100",
-    path: "M 25,15 L 40,12 L 55,15 L 68,12 L 80,18 L 88,28 L 90,40 L 85,50 L 88,60 L 85,70 L 75,75 L 65,72 L 55,78 L 45,75 L 35,78 L 25,72 L 18,62 L 15,50 L 18,38 L 15,28 Z M 82,55 L 92,52 L 98,60 L 95,70 L 85,72 Z"
-  },
-  {
-    name: "秋田県", region: "東北",
-    viewBox: "0 0 100 140",
-    path: "M 35,10 L 50,8 L 62,12 L 70,22 L 72,35 L 68,48 L 70,60 L 72,75 L 68,90 L 60,100 L 50,105 L 40,100 L 30,90 L 25,78 L 22,65 L 25,52 L 22,38 L 25,25 Z"
-  },
-  {
-    name: "山形県", region: "東北",
-    viewBox: "0 0 100 120",
-    path: "M 30,10 L 45,8 L 60,12 L 70,22 L 75,35 L 72,48 L 75,60 L 72,72 L 65,82 L 55,88 L 45,85 L 35,78 L 28,68 L 22,55 L 20,42 L 22,30 Z"
-  },
-  {
-    name: "福島県", region: "東北",
-    viewBox: "0 0 140 100",
-    path: "M 20,20 L 40,15 L 60,18 L 80,15 L 100,18 L 115,25 L 120,38 L 115,50 L 118,62 L 112,72 L 100,78 L 80,75 L 60,78 L 40,75 L 22,68 L 15,55 L 12,42 Z"
-  },
-  {
-    name: "茨城県", region: "関東",
-    viewBox: "0 0 100 120",
-    path: "M 30,10 L 50,8 L 65,12 L 75,22 L 80,35 L 78,48 L 82,60 L 80,72 L 72,82 L 62,88 L 52,85 L 42,80 L 35,70 L 28,58 L 22,45 L 20,32 Z M 75,75 L 88,72 L 92,82 L 85,90 L 75,88 Z"
-  },
-  {
-    name: "栃木県", region: "関東",
-    viewBox: "0 0 110 110",
-    path: "M 25,20 L 45,15 L 65,18 L 80,25 L 88,38 L 85,52 L 88,65 L 82,78 L 68,85 L 52,82 L 38,78 L 25,68 L 18,52 L 15,38 Z"
-  },
-  {
-    name: "群馬県", region: "関東",
-    viewBox: "0 0 120 100",
-    path: "M 20,25 L 40,18 L 60,22 L 80,18 L 95,28 L 100,42 L 98,55 L 100,68 L 92,78 L 75,82 L 55,80 L 35,75 L 20,65 L 12,50 L 15,35 Z"
-  },
-  {
-    name: "埼玉県", region: "関東",
-    viewBox: "0 0 130 80",
-    path: "M 15,20 L 35,15 L 60,18 L 85,15 L 105,20 L 115,32 L 112,45 L 105,55 L 88,60 L 65,62 L 42,60 L 22,55 L 12,42 Z"
-  },
-  {
-    name: "千葉県", region: "関東",
-    viewBox: "0 0 120 120",
-    path: "M 30,10 L 50,8 L 68,12 L 80,22 L 85,35 L 80,45 L 85,55 L 88,68 L 85,80 L 75,90 L 62,95 L 50,92 L 40,85 L 30,75 L 22,62 L 20,48 L 15,35 Z M 80,42 L 95,40 L 100,52 L 92,60 L 80,58 Z"
-  },
-  {
-    name: "東京都", region: "関東",
-    viewBox: "0 0 100 80",
-    path: "M 10,25 L 30,18 L 50,20 L 68,18 L 82,25 L 88,38 L 82,50 L 68,55 L 50,58 L 30,55 L 15,48 L 8,38 Z M 5,35 L 10,30 L 15,35 L 12,42 L 5,42 Z"
-  },
-  {
-    name: "神奈川県", region: "関東",
-    viewBox: "0 0 120 80",
-    path: "M 10,20 L 35,15 L 60,18 L 85,15 L 105,22 L 112,35 L 108,48 L 95,55 L 75,58 L 52,55 L 30,52 L 15,42 Z M 100,48 L 112,50 L 115,60 L 105,65 L 95,60 Z"
-  },
-  {
-    name: "新潟県", region: "中部",
-    viewBox: "0 0 160 100",
-    path: "M 10,45 L 25,35 L 40,30 L 58,28 L 75,25 L 90,28 L 105,25 L 120,28 L 135,35 L 145,45 L 148,58 L 140,68 L 125,72 L 110,68 L 95,72 L 78,68 L 62,72 L 45,68 L 30,60 L 15,55 Z"
-  },
-  {
-    name: "富山県", region: "中部",
-    viewBox: "0 0 110 90",
-    path: "M 20,20 L 40,15 L 60,18 L 80,22 L 92,35 L 88,50 L 82,62 L 70,70 L 55,72 L 40,68 L 28,58 L 18,45 Z M 88,28 L 100,25 L 105,35 L 98,45 L 88,42 Z"
-  },
-  {
-    name: "石川県", region: "中部",
-    viewBox: "0 0 80 160",
-    path: "M 25,10 L 42,8 L 55,15 L 60,28 L 55,42 L 50,55 L 52,70 L 50,85 L 45,100 L 38,112 L 30,118 L 22,112 L 18,98 L 20,82 L 18,65 L 20,50 L 15,35 L 18,20 Z"
-  },
-  {
-    name: "福井県", region: "中部",
-    viewBox: "0 0 90 120",
-    path: "M 25,15 L 45,10 L 62,15 L 72,28 L 75,42 L 70,55 L 72,70 L 68,82 L 58,90 L 45,92 L 32,88 L 22,78 L 18,65 L 20,50 L 18,35 Z"
-  },
-  {
-    name: "山梨県", region: "中部",
-    viewBox: "0 0 110 90",
-    path: "M 20,20 L 42,15 L 65,18 L 82,25 L 90,38 L 88,52 L 82,65 L 68,72 L 50,75 L 32,70 L 18,58 L 12,42 Z"
-  },
-  {
-    name: "長野県", region: "中部",
-    viewBox: "0 0 100 140",
-    path: "M 35,10 L 55,8 L 70,15 L 78,28 L 80,42 L 75,55 L 78,70 L 75,85 L 65,98 L 52,105 L 38,100 L 28,88 L 22,72 L 20,55 L 22,40 L 18,25 Z"
-  },
-  {
-    name: "岐阜県", region: "中部",
-    viewBox: "0 0 120 140",
-    path: "M 25,15 L 45,10 L 65,15 L 82,25 L 92,38 L 95,52 L 90,65 L 92,80 L 88,95 L 78,108 L 62,115 L 45,110 L 30,100 L 20,85 L 15,68 L 18,52 L 15,35 Z"
-  },
-  {
-    name: "静岡県", region: "中部",
-    viewBox: "0 0 150 80",
-    path: "M 10,25 L 35,18 L 65,15 L 95,18 L 120,22 L 138,32 L 142,45 L 135,58 L 115,65 L 90,68 L 65,65 L 40,60 L 20,50 L 8,38 Z"
-  },
-  {
-    name: "愛知県", region: "中部",
-    viewBox: "0 0 120 100",
-    path: "M 15,20 L 38,15 L 62,18 L 82,15 L 98,25 L 105,38 L 102,52 L 98,65 L 85,75 L 68,80 L 50,78 L 32,72 L 18,60 L 10,45 Z M 98,55 L 110,55 L 115,65 L 108,75 L 98,72 Z"
-  },
-  {
-    name: "三重県", region: "近畿",
-    viewBox: "0 0 80 160",
-    path: "M 28,10 L 48,8 L 62,15 L 68,28 L 65,42 L 62,58 L 65,72 L 60,88 L 52,102 L 42,112 L 30,115 L 20,108 L 15,95 L 18,80 L 15,65 L 18,50 L 15,35 L 18,20 Z"
-  },
-  {
-    name: "滋賀県", region: "近畿",
-    viewBox: "0 0 90 110",
-    path: "M 25,15 L 45,10 L 62,15 L 72,28 L 75,42 L 70,55 L 65,68 L 55,80 L 42,85 L 28,80 L 18,68 L 15,52 L 18,38 Z M 38,30 L 55,28 L 62,38 L 58,50 L 45,52 L 32,45 L 30,35 Z"
-  },
-  {
-    name: "京都府", region: "近畿",
-    viewBox: "0 0 100 120",
-    path: "M 20,15 L 42,10 L 62,15 L 75,28 L 78,42 L 72,55 L 75,68 L 70,82 L 58,90 L 42,92 L 28,85 L 18,72 L 15,55 L 18,40 Z"
-  },
-  {
-    name: "大阪府", region: "近畿",
-    viewBox: "0 0 90 80",
-    path: "M 15,18 L 35,12 L 55,15 L 70,22 L 78,35 L 75,48 L 65,58 L 50,62 L 32,60 L 18,50 L 10,38 Z"
-  },
-  {
-    name: "兵庫県", region: "近畿",
-    viewBox: "0 0 150 90",
-    path: "M 10,22 L 35,15 L 65,18 L 92,15 L 118,18 L 135,28 L 140,42 L 132,55 L 115,62 L 92,65 L 65,62 L 40,58 L 20,48 L 8,35 Z M 5,40 L 12,38 L 15,48 L 10,55 L 3,50 Z"
-  },
-  {
-    name: "奈良県", region: "近畿",
-    viewBox: "0 0 100 110",
-    path: "M 22,15 L 45,10 L 68,15 L 78,28 L 80,42 L 75,55 L 78,70 L 70,82 L 55,88 L 38,85 L 25,75 L 18,60 L 15,45 L 18,30 Z"
-  },
-  {
-    name: "和歌山県", region: "近畿",
-    viewBox: "0 0 90 130",
-    path: "M 28,10 L 50,8 L 65,15 L 70,28 L 68,42 L 72,55 L 68,68 L 62,82 L 52,95 L 40,102 L 28,98 L 18,85 L 15,70 L 18,55 L 15,40 L 18,25 Z"
-  },
-  {
-    name: "鳥取県", region: "中国",
-    viewBox: "0 0 140 70",
-    path: "M 12,18 L 35,12 L 60,15 L 85,12 L 112,15 L 128,25 L 130,38 L 122,50 L 100,55 L 72,52 L 45,55 L 22,48 L 10,35 Z"
-  },
-  {
-    name: "島根県", region: "中国",
-    viewBox: "0 0 160 70",
-    path: "M 10,18 L 35,12 L 65,15 L 95,12 L 125,15 L 145,22 L 150,35 L 142,48 L 118,52 L 88,48 L 58,52 L 28,48 L 12,38 Z M 6,25 L 15,22 L 18,32 L 12,40 L 4,35 Z M 148,18 L 158,20 L 160,30 L 152,35 L 145,28 Z"
-  },
-  {
-    name: "岡山県", region: "中国",
-    viewBox: "0 0 130 90",
-    path: "M 18,15 L 42,10 L 68,12 L 95,10 L 112,18 L 118,32 L 112,45 L 108,58 L 95,68 L 75,72 L 52,68 L 32,62 L 18,50 L 12,35 Z"
-  },
-  {
-    name: "広島県", region: "中国",
-    viewBox: "0 0 150 90",
-    path: "M 12,18 L 38,12 L 68,15 L 98,12 L 125,15 L 138,28 L 135,42 L 128,55 L 110,62 L 85,65 L 58,62 L 32,58 L 15,45 Z M 8,35 L 15,32 L 18,42 L 12,48 L 5,42 Z"
-  },
-  {
-    name: "山口県", region: "中国",
-    viewBox: "0 0 140 80",
-    path: "M 10,20 L 35,15 L 65,18 L 95,15 L 118,20 L 128,32 L 125,45 L 112,55 L 88,58 L 62,55 L 35,52 L 15,42 Z M 5,32 L 15,30 L 18,42 L 10,48 L 3,40 Z M 122,25 L 135,28 L 138,40 L 128,45 L 118,38 Z"
-  },
-  {
-    name: "徳島県", region: "四国",
-    viewBox: "0 0 110 100",
-    path: "M 20,18 L 45,12 L 70,15 L 88,25 L 92,40 L 85,52 L 88,65 L 80,78 L 65,82 L 48,78 L 32,68 L 20,55 L 15,40 Z"
-  },
-  {
-    name: "香川県", region: "四国",
-    viewBox: "0 0 140 60",
-    path: "M 10,15 L 35,10 L 65,12 L 95,10 L 120,12 L 130,22 L 128,35 L 115,42 L 90,45 L 62,42 L 35,45 L 15,38 L 8,25 Z M 5,20 L 12,18 L 15,28 L 8,32 L 2,26 Z"
-  },
-  {
-    name: "愛媛県", region: "四国",
-    viewBox: "0 0 100 130",
-    path: "M 25,10 L 48,8 L 68,12 L 78,25 L 80,40 L 75,55 L 78,70 L 72,85 L 60,95 L 45,98 L 30,90 L 20,75 L 15,58 L 18,42 L 15,25 Z"
-  },
-  {
-    name: "高知県", region: "四国",
-    viewBox: "0 0 150 80",
-    path: "M 10,20 L 35,15 L 65,18 L 95,15 L 122,18 L 135,30 L 132,45 L 120,55 L 95,60 L 65,58 L 35,55 L 15,45 L 8,30 Z"
-  },
-  {
-    name: "福岡県", region: "九州",
-    viewBox: "0 0 140 80",
-    path: "M 12,18 L 38,12 L 68,15 L 98,12 L 120,18 L 128,30 L 122,42 L 108,50 L 82,52 L 55,50 L 28,45 L 12,35 Z M 5,28 L 15,25 L 18,35 L 10,42 L 3,35 Z M 120,22 L 132,25 L 135,38 L 125,42 L 115,35 Z"
-  },
-  {
-    name: "佐賀県", region: "九州",
-    viewBox: "0 0 110 70",
-    path: "M 15,18 L 40,12 L 65,15 L 88,12 L 100,22 L 98,35 L 88,45 L 68,50 L 45,48 L 22,42 L 12,30 Z"
-  },
-  {
-    name: "長崎県", region: "九州",
-    viewBox: "0 0 110 130",
-    path: "M 30,10 L 55,8 L 72,15 L 78,28 L 72,40 L 68,55 L 72,70 L 65,85 L 52,95 L 38,98 L 25,90 L 18,75 L 20,60 L 15,45 L 18,30 Z M 8,50 L 20,48 L 22,60 L 15,68 L 5,62 Z M 75,25 L 88,28 L 90,38 L 80,45 L 70,38 Z M 85,15 L 95,18 L 98,28 L 88,32 L 80,25 Z"
-  },
-  {
-    name: "熊本県", region: "九州",
-    viewBox: "0 0 120 120",
-    path: "M 22,18 L 45,12 L 70,15 L 90,22 L 98,35 L 95,50 L 98,65 L 90,80 L 75,90 L 55,92 L 35,85 L 20,72 L 15,55 L 18,40 Z"
-  },
-  {
-    name: "大分県", region: "九州",
-    viewBox: "0 0 120 100",
-    path: "M 18,18 L 42,12 L 68,15 L 88,22 L 98,35 L 95,50 L 88,62 L 75,72 L 55,75 L 35,70 L 18,58 L 10,42 Z"
-  },
-  {
-    name: "宮崎県", region: "九州",
-    viewBox: "0 0 90 140",
-    path: "M 28,10 L 50,8 L 65,15 L 70,28 L 68,42 L 72,58 L 68,75 L 62,90 L 52,105 L 38,112 L 25,105 L 18,88 L 20,72 L 15,55 L 18,40 L 15,25 Z"
-  },
-  {
-    name: "鹿児島県", region: "九州",
-    viewBox: "0 0 110 160",
-    path: "M 25,10 L 48,8 L 65,15 L 72,28 L 68,42 L 72,58 L 65,72 L 55,82 L 42,85 L 30,78 L 20,65 L 18,50 L 15,35 Z M 10,80 L 28,78 L 35,90 L 30,102 L 18,105 L 8,95 Z M 35,100 L 55,98 L 65,110 L 58,122 L 42,125 L 28,115 Z M 50,118 L 68,120 L 72,132 L 62,140 L 48,138 L 40,128 Z M 40,85 L 25,88 L 20,100 L 28,108 L 40,105 L 48,95 Z"
-  },
-  {
-    name: "沖縄県", region: "沖縄",
-    viewBox: "0 0 160 80",
-    path: "M 10,30 L 25,25 L 38,28 L 42,38 L 35,48 L 22,50 L 10,42 Z M 45,28 L 60,25 L 72,28 L 75,38 L 68,48 L 55,50 L 42,42 Z M 80,25 L 95,22 L 108,25 L 112,35 L 105,45 L 90,48 L 78,38 Z M 115,22 L 130,20 L 142,22 L 148,32 L 140,42 L 125,45 L 112,35 Z M 148,28 L 158,30 L 160,40 L 150,48 L 142,40 Z"
-  }
-];
+// ============================================================
+// japan.topojson のデータ構造:
+//   objects.japan.geometries[i].properties.nam_ja = "東京都"
+//   objects.japan.geometries[i].properties.id     = 13
+//   transform.scale / translate あり（量子化座標）
+// ============================================================
 
-// ─────────────────────────────────────────────
-// ゲームロジック
-// ─────────────────────────────────────────────
+const PREF_REGIONS = {
+  1:"北海道",2:"東北",3:"東北",4:"東北",5:"東北",6:"東北",7:"東北",
+  8:"関東",9:"関東",10:"関東",11:"関東",12:"関東",13:"関東",14:"関東",
+  15:"中部",16:"中部",17:"中部",18:"中部",19:"中部",20:"中部",
+  21:"中部",22:"中部",23:"中部",
+  24:"近畿",25:"近畿",26:"近畿",27:"近畿",28:"近畿",29:"近畿",30:"近畿",
+  31:"中国",32:"中国",33:"中国",34:"中国",35:"中国",
+  36:"四国",37:"四国",38:"四国",39:"四国",
+  40:"九州",41:"九州",42:"九州",43:"九州",44:"九州",45:"九州",46:"九州",
+  47:"沖縄"
+};
+
+// ── TopoJSON デコーダ（量子化座標→実座標）────────────────
+function decodeArcs(topoArcs, scale, translate) {
+  return topoArcs.map(arc => {
+    let x = 0, y = 0;
+    return arc.map(([dx, dy]) => {
+      x += dx; y += dy;
+      return [x * scale[0] + translate[0], y * scale[1] + translate[1]];
+    });
+  });
+}
+
+function resolveRing(indices, arcs) {
+  const pts = [];
+  indices.forEach(idx => {
+    const arc = idx < 0 ? [...arcs[~idx]].reverse() : arcs[idx];
+    arc.forEach((pt, i) => {
+      if (i > 0 || pts.length === 0) pts.push([...pt]);
+    });
+  });
+  return pts;
+}
+
+function geomToRings(geom, arcs) {
+  const rings = [];
+  if (geom.type === 'Polygon') {
+    geom.arcs.forEach(r => rings.push(resolveRing(r, arcs)));
+  } else if (geom.type === 'MultiPolygon') {
+    geom.arcs.forEach(poly => poly.forEach(r => rings.push(resolveRing(r, arcs))));
+  }
+  return rings;
+}
+
+// ── 座標→SVGパス ─────────────────────────────────────────
+function ringsToPath(rings) {
+  return rings.map(pts => {
+    if (pts.length < 2) return '';
+    return 'M' + pts.map((p,i)=>(i===0?'':' L')+p[0].toFixed(4)+','+p[1].toFixed(4)).join('')+'Z';
+  }).join(' ');
+}
+
+// ── viewBox 計算（Y軸反転込み）────────────────────────────
+function calcViewBox(rings) {
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  rings.forEach(pts=>pts.forEach(([x,y])=>{
+    if(x<minX)minX=x; if(x>maxX)maxX=x;
+    if(y<minY)minY=y; if(y>maxY)maxY=y;
+  }));
+  if(!isFinite(minX)) return '0 0 1 1';
+  const w=maxX-minX, h=maxY-minY;
+  const pad=Math.max(w,h)*0.06;
+  return `${(minX-pad).toFixed(4)} ${(minY-pad).toFixed(4)} ${(w+pad*2).toFixed(4)} ${(h+pad*2).toFixed(4)}`;
+}
+
+// ── Y軸反転（地理座標系→SVG座標系）──────────────────────
+function flipRingsY(rings) {
+  // 全リングのY中心を求めてY軸反転
+  let minY=Infinity,maxY=-Infinity;
+  rings.forEach(pts=>pts.forEach(([,y])=>{if(y<minY)minY=y;if(y>maxY)maxY=y;}));
+  const cy=(minY+maxY)/2;
+  return rings.map(pts=>pts.map(([x,y])=>[x, cy*2-y]));
+}
+
+// ============================================================
+// ゲーム状態
+// ============================================================
+let prefData = [];
 let questionOrder = [];
 let currentIndex = 0;
 let answered = false;
 let correctCount = 0;
 let totalAnswered = 0;
 
-function shuffle(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
+// ── TopoJSON ロード ──────────────────────────────────────
+async function loadTopoJSON() {
+  const loadEl = document.getElementById('loading-area');
+  const errEl  = document.getElementById('error-msg');
+  const svg    = document.getElementById('silhouette-svg');
+
+  try {
+    // 自分のGitHubリポジトリから読み込む
+    const res = await fetch('./japan.topojson');
+    if (!res.ok) throw new Error(`ファイルが見つかりません (HTTP ${res.status})`);
+    const topo = await res.json();
+
+    const { scale, translate } = topo.transform;
+    const decodedArcs = decodeArcs(topo.arcs, scale, translate);
+
+    // オブジェクト名を自動検出（"japan" など）
+    const objKey = Object.keys(topo.objects)[0];
+    const geometries = topo.objects[objKey].geometries;
+
+    // 全地物のY範囲を取得してflip用中心値を計算
+    let globalMinY=Infinity, globalMaxY=-Infinity;
+    geometries.forEach(geom => {
+      geomToRings(geom, decodedArcs).forEach(pts =>
+        pts.forEach(([,y])=>{if(y<globalMinY)globalMinY=y;if(y>globalMaxY)globalMaxY=y;})
+      );
+    });
+    const globalCY = (globalMinY + globalMaxY) / 2;
+
+    // 都道府県ごとにデータ生成
+    prefData = geometries.map(geom => {
+      const props = geom.properties || {};
+      const name  = props.nam_ja || props.name || props.NAME || '不明';
+      const id    = Number(props.id || 0);
+      const rings = geomToRings(geom, decodedArcs);
+
+      // Y軸反転（グローバル中心基準）
+      const flipped = rings.map(pts => pts.map(([x,y]) => [x, globalCY*2 - y]));
+
+      return {
+        id,
+        name,
+        region: PREF_REGIONS[id] || '',
+        pathStr: ringsToPath(flipped),
+        viewBox: calcViewBox(flipped)
+      };
+    }).filter(p => p.name !== '不明' && p.pathStr.length > 0);
+
+    if (prefData.length === 0) throw new Error('都道府県データが0件でした');
+
+    loadEl.style.display = 'none';
+    svg.style.display = '';
+    document.getElementById('rs-total').textContent = ` / ${prefData.length}`;
+    startQuiz();
+
+  } catch(e) {
+    loadEl.style.display = 'none';
+    errEl.innerHTML =
+      `<strong>⚠️ 読み込みエラー</strong><br><br>${e.message}<br><br>` +
+      `japan.topojson が同じフォルダにあるか確認してください。<br>` +
+      `またはページを再読み込みしてください。`;
+    errEl.classList.add('show');
   }
+}
+
+// ============================================================
+// ゲームロジック
+// ============================================================
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
   return a;
 }
 
-function startQuiz() {
-  questionOrder = shuffle(PREFECTURES.map((_, i) => i));
-  currentIndex = 0;
-  correctCount = 0;
-  totalAnswered = 0;
-  answered = false;
+function startQuiz(){
+  questionOrder=shuffle(prefData.map((_,i)=>i));
+  currentIndex=0;correctCount=0;totalAnswered=0;answered=false;
   document.getElementById('result-screen').classList.remove('show');
-  document.getElementById('main').style.display = '';
-  document.getElementById('score-bar').style.display = '';
+  document.getElementById('main').style.display='';
+  document.getElementById('score-bar').style.display='';
   updateScore();
   loadQuestion();
 }
 
-function updateScore() {
-  document.getElementById('score-correct').textContent = correctCount;
-  document.getElementById('score-total').textContent = totalAnswered;
+function updateScore(){
+  document.getElementById('score-correct').textContent=correctCount;
+  document.getElementById('score-total').textContent=totalAnswered;
 }
 
-function loadQuestion() {
-  answered = false;
+function loadQuestion(){
+  answered=false;
   document.getElementById('next-btn').classList.remove('visible');
+  const fb=document.getElementById('feedback-text');
+  const ar=document.getElementById('answer-reveal');
+  fb.className='';ar.classList.remove('show');ar.textContent='';
 
-  const fb = document.getElementById('feedback-text');
-  const ar = document.getElementById('answer-reveal');
-  fb.classList.remove('show','correct','wrong');
-  ar.classList.remove('show');
-  ar.textContent = '';
+  const pref=prefData[questionOrder[currentIndex]];
+  const svg=document.getElementById('silhouette-svg');
+  svg.setAttribute('viewBox',pref.viewBox);
+  svg.innerHTML=`<path d="${pref.pathStr}"/>`;
+  svg.className='';
 
-  const pref = PREFECTURES[questionOrder[currentIndex]];
+  document.getElementById('pref-region').textContent=
+    pref.region ? pref.region+'地方' : '';
 
-  // シルエット更新
-  const svg = document.getElementById('silhouette-svg');
-  svg.setAttribute('viewBox', pref.viewBox);
-  svg.innerHTML = `<path d="${pref.path}"/>`;
-  svg.className = '';
+  const correct=pref.name;
+  const wrongs=shuffle(prefData.map(p=>p.name).filter(n=>n!==correct)).slice(0,3);
+  const options=shuffle([correct,...wrongs]);
 
-  // 地方表示
-  document.getElementById('pref-region').textContent = pref.region + '地方';
-
-  // 選択肢生成
-  const correctName = pref.name;
-  let pool = PREFECTURES.map(p => p.name).filter(n => n !== correctName);
-  const wrongs = shuffle(pool).slice(0, 3);
-  const options = shuffle([correctName, ...wrongs]);
-
-  const btns = document.querySelectorAll('.opt-btn');
-  btns.forEach((btn, i) => {
-    btn.textContent = options[i];
-    btn.disabled = false;
-    btn.className = 'opt-btn';
-    btn.onclick = () => checkAnswer(options[i], correctName, btn, options);
+  document.querySelectorAll('.opt-btn').forEach((btn,i)=>{
+    btn.textContent=options[i];
+    btn.disabled=false;
+    btn.className='opt-btn';
+    btn.onclick=()=>checkAnswer(options[i],correct,btn);
   });
 
-  // フェードイン
-  document.getElementById('quiz-card').classList.remove('fade-in');
-  void document.getElementById('quiz-card').offsetWidth;
-  document.getElementById('quiz-card').classList.add('fade-in');
+  const card=document.getElementById('quiz-card');
+  card.classList.remove('fade-in');void card.offsetWidth;card.classList.add('fade-in');
 }
 
-function checkAnswer(selected, correct, clickedBtn, options) {
-  if (answered) return;
-  answered = true;
-  totalAnswered++;
-
-  const isCorrect = selected === correct;
-  if (isCorrect) correctCount++;
+function checkAnswer(selected,correct,clickedBtn){
+  if(answered)return;
+  answered=true;totalAnswered++;
+  const isCorrect=selected===correct;
+  if(isCorrect)correctCount++;
   updateScore();
 
-  const svg = document.getElementById('silhouette-svg');
-  const fb = document.getElementById('feedback-text');
-  const ar = document.getElementById('answer-reveal');
+  const svg=document.getElementById('silhouette-svg');
+  const fb=document.getElementById('feedback-text');
+  const ar=document.getElementById('answer-reveal');
 
-  if (isCorrect) {
-    svg.className = 'correct';
-    fb.textContent = '🎉 正解！';
-    fb.className = 'correct show';
+  if(isCorrect){
+    svg.className='correct';
+    fb.textContent='🎉 正解！';fb.className='correct show';
     clickedBtn.classList.add('correct-answer');
-  } else {
-    svg.className = 'wrong';
-    fb.textContent = '❌ 不正解…';
-    fb.className = 'wrong show';
-    ar.textContent = `正解は「${correct}」`;
-    ar.classList.add('show');
+  }else{
+    svg.className='wrong';
+    fb.textContent='❌ 不正解…';fb.className='wrong show';
+    ar.textContent=`正解は「${correct}」`;ar.classList.add('show');
     clickedBtn.classList.add('wrong-answer');
   }
 
-  // 全ボタン処理
-  const btns = document.querySelectorAll('.opt-btn');
-  btns.forEach(btn => {
-    btn.disabled = true;
-    if (btn.textContent === correct && !isCorrect) {
-      btn.classList.add('correct-answer');
-    } else if (btn !== clickedBtn) {
-      btn.classList.add('dimmed');
-    }
+  document.querySelectorAll('.opt-btn').forEach(btn=>{
+    btn.disabled=true;
+    if(btn.textContent===correct&&!isCorrect)btn.classList.add('correct-answer');
+    else if(btn!==clickedBtn)btn.classList.add('dimmed');
   });
 
-  // 次へボタン or 結果
-  if (currentIndex < PREFECTURES.length - 1) {
+  if(currentIndex<prefData.length-1){
     document.getElementById('next-btn').classList.add('visible');
-  } else {
-    setTimeout(showResult, 1200);
+  }else{
+    setTimeout(showResult,1400);
   }
 }
 
-document.getElementById('next-btn').addEventListener('click', () => {
-  currentIndex++;
-  loadQuestion();
-});
+document.getElementById('next-btn').addEventListener('click',()=>{currentIndex++;loadQuestion();});
 
-function showResult() {
-  document.getElementById('main').style.display = 'none';
-  document.getElementById('score-bar').style.display = 'none';
-  document.getElementById('rs-correct').textContent = correctCount;
-
-  let msg = '';
-  const rate = correctCount / 47;
-  if (rate === 1) msg = '完璧です！全問正解、おめでとうございます🎊';
-  else if (rate >= 0.8) msg = '素晴らしい！地理の知識が豊富ですね🌟';
-  else if (rate >= 0.6) msg = 'よくできました！あと少しで全問正解です💪';
-  else if (rate >= 0.4) msg = '半分以上正解！地道に練習しましょう📚';
-  else msg = '難しかったですね。繰り返し挑戦してみましょう🗾';
-
-  document.getElementById('result-msg').textContent = msg;
+function showResult(){
+  document.getElementById('main').style.display='none';
+  document.getElementById('score-bar').style.display='none';
+  document.getElementById('rs-correct').textContent=correctCount;
+  document.getElementById('rs-total').textContent=` / ${prefData.length}`;
+  const rate=correctCount/prefData.length;
+  document.getElementById('result-msg').textContent=
+    rate===1      ?'完璧です！全問正解、おめでとうございます🎊':
+    rate>=0.8     ?'素晴らしい！地理の知識が豊富ですね🌟':
+    rate>=0.6     ?'よくできました！あと少しで全問正解です💪':
+    rate>=0.4     ?'半分以上正解！地道に練習しましょう📚':
+                   '難しかったですね。繰り返し挑戦してみましょう🗾';
   document.getElementById('result-screen').classList.add('show');
 }
 
-// PWA Service Worker登録
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+// ── PWA ──────────────────────────────────────────────────
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
   });
 }
 
-// 起動
-startQuiz();
+// ── 起動 ─────────────────────────────────────────────────
+loadTopoJSON();
 </script>
 </body>
 </html>
