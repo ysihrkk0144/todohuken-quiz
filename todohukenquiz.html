@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#6c63ff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>都道府県別シルエットクイズ</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@400;700&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f0f4ff;--surface:#fff;--card:#fff;
+    --accent:#6c63ff;--accent2:#ff6b6b;--accent3:#ffd93d;
+    --correct:#06d6a0;--wrong:#ff6b6b;
+    --text:#2d2d48;--muted:#8888aa;--border:#e0e0f0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;overflow-x:hidden;}
+  body{background:radial-gradient(ellipse at 10% 0%,rgba(108,99,255,.10) 0%,transparent 55%),radial-gradient(ellipse at 90% 100%,rgba(255,107,107,.08) 0%,transparent 55%),#f0f4ff;}
+  #app-header{text-align:center;padding:22px 16px 0;}
+  #app-title{font-family:'Kaisei Decol',serif;font-size:clamp(1.3rem,5.5vw,1.9rem);font-weight:700;letter-spacing:.04em;color:var(--accent);line-height:1.2;}
+  #app-title .icon{font-size:1.2em;margin-right:6px;}
+  #score-bar{display:flex;justify-content:flex-start;padding:12px 16px 0;}
+  #score-display{background:var(--accent);border-radius:24px;padding:6px 18px;font-size:.85rem;color:#fff;display:flex;align-items:center;gap:5px;box-shadow:0 2px 10px rgba(108,99,255,.25);font-weight:700;}
+  #score-correct{font-size:1.1rem;color:var(--accent3);}
+  #score-total{font-size:1.1rem;}
+  #score-display .sep{opacity:.7;}
+  #score-display .label{font-weight:500;font-size:.8rem;opacity:.85;}
+  #main{display:flex;flex-direction:column;align-items:center;padding:12px 16px 32px;gap:14px;max-width:480px;margin:0 auto;}
+  #question-heading{font-size:clamp(.9rem,3.8vw,1.05rem);color:var(--muted);letter-spacing:.03em;text-align:center;font-weight:500;}
+  #quiz-card{width:100%;background:var(--card);border-radius:24px;padding:18px;box-shadow:0 4px 24px rgba(108,99,255,.12);border:2px solid var(--border);position:relative;overflow:hidden;}
+  #quiz-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent3));}
+  #silhouette-frame{width:100%;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f7f8ff,#eef0ff);border-radius:16px;border:2px solid var(--border);position:relative;overflow:hidden;}
+  #silhouette-svg{width:82%;height:82%;display:none;position:relative;z-index:1;}
+  #silhouette-svg path{fill:var(--accent);opacity:.9;transition:fill .35s,filter .35s;}
+  #silhouette-svg.correct path{fill:var(--correct);}
+  #silhouette-svg.wrong path{fill:var(--wrong);}
+  #loading-area{display:flex;flex-direction:column;align-items:center;gap:12px;padding:30px 0;color:var(--muted);font-size:.88rem;}
+  #error-msg{color:var(--wrong);font-size:.82rem;text-align:center;padding:20px;line-height:1.7;display:none;}
+  #error-msg.show{display:block;}
+  #feedback-area{min-height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;margin-top:12px;}
+  #feedback-text{font-family:'Kaisei Decol',serif;font-size:1.2rem;font-weight:700;text-align:center;opacity:0;transform:translateY(8px);transition:opacity .3s,transform .3s;}
+  #feedback-text.show{opacity:1;transform:translateY(0);}
+  #feedback-text.correct{color:var(--correct);}
+  #feedback-text.wrong{color:var(--wrong);}
+  #answer-reveal{font-size:.85rem;color:var(--muted);text-align:center;font-weight:500;opacity:0;transition:opacity .3s .15s;}
+  #answer-reveal.show{opacity:1;}
+  #options-grid{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .opt-btn{background:#fff;border:2.5px solid var(--border);border-radius:16px;color:var(--text);font-family:'Noto Sans JP',sans-serif;font-size:clamp(.88rem,3.8vw,1.05rem);font-weight:700;padding:15px 8px;cursor:pointer;text-align:center;transition:background .18s,border-color .18s,transform .12s,box-shadow .18s;-webkit-tap-highlight-color:transparent;min-height:54px;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+  .opt-btn:active{transform:scale(.96);}
+  .opt-btn:disabled{cursor:default;transform:none;}
+  .opt-btn.correct-answer{background:rgba(6,214,160,.12);border-color:var(--correct);color:var(--correct);}
+  .opt-btn.wrong-answer{background:rgba(255,107,107,.10);border-color:var(--wrong);color:var(--wrong);}
+  .opt-btn.dimmed{opacity:.32;}
+  #next-btn{width:100%;background:linear-gradient(135deg,var(--accent),#8b85ff);border:none;border-radius:18px;color:#fff;font-family:'Kaisei Decol',serif;font-size:1.1rem;font-weight:700;letter-spacing:.08em;padding:17px;cursor:pointer;box-shadow:0 4px 18px rgba(108,99,255,.35);transition:opacity .2s,transform .15s;display:none;-webkit-tap-highlight-color:transparent;}
+  #next-btn:active{transform:scale(.98);opacity:.9;}
+  #next-btn.visible{display:block;}
+  #result-screen{display:none;flex-direction:column;align-items:center;gap:22px;text-align:center;padding:40px 20px;max-width:480px;margin:0 auto;}
+  #result-screen.show{display:flex;}
+  #result-emoji{font-size:4rem;line-height:1;}
+  #result-title{font-family:'Kaisei Decol',serif;font-size:1.9rem;font-weight:700;color:var(--accent);}
+  #result-score-big{font-family:'Kaisei Decol',serif;font-size:4.5rem;font-weight:900;color:var(--accent);line-height:1;}
+  #result-score-big span{font-size:1.6rem;color:var(--muted);font-weight:700;}
+  #result-msg{font-size:1rem;color:var(--muted);line-height:1.7;background:#fff;border-radius:16px;padding:14px 20px;border:2px solid var(--border);width:100%;}
+  #restart-btn{background:linear-gradient(135deg,var(--accent),#8b85ff);border:none;border-radius:18px;color:#fff;font-family:'Kaisei Decol',serif;font-size:1.15rem;font-weight:700;letter-spacing:.1em;padding:17px 52px;cursor:pointer;box-shadow:0 4px 20px rgba(108,99,255,.35);-webkit-tap-highlight-color:transparent;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .spinner{width:34px;height:34px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+  @keyframes fadeInUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+  .fade-in{animation:fadeInUp .35s ease both;}
+</style>
+</head>
+<body>
+
+<header id="app-header">
+  <h1 id="app-title"><span class="icon">🗾</span>都道府県シルエットクイズ</h1>
+</header>
+<div id="score-bar">
+  <div id="score-display">
+    <span class="label">正答数</span>
+    <span id="score-correct">0</span>
+    <span class="sep">/</span>
+    <span id="score-total">0</span>
+  </div>
+</div>
+<main id="main">
+  <p id="question-heading">このシルエットは、どこの都道府県でしょう？</p>
+  <div id="quiz-card">
+    <div id="silhouette-frame">
+      <div id="loading-area"><div class="spinner"></div><span>地図データを読み込み中…</span></div>
+      <div id="error-msg"></div>
+      <svg id="silhouette-svg" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div id="feedback-area">
+      <div id="feedback-text"></div>
+      <div id="answer-reveal"></div>
+    </div>
+  </div>
+  <div id="options-grid">
+    <button class="opt-btn" id="opt0"></button>
+    <button class="opt-btn" id="opt1"></button>
+    <button class="opt-btn" id="opt2"></button>
+    <button class="opt-btn" id="opt3"></button>
+  </div>
+  <button id="next-btn">次の問題へ ▶</button>
+</main>
+<div id="result-screen">
+  <div id="result-emoji">🎉</div>
+  <div id="result-title">クイズ終了！</div>
+  <div id="result-score-big"><span id="rs-correct">0</span><span id="rs-total"> / 47</span></div>
+  <div id="result-msg"></div>
+  <button id="restart-btn" onclick="startQuiz()">もう一度挑戦する 🔄</button>
+</div>
+
+<script>
+// svgtest.html で動作確認済みの処理をそのまま使用
+let prefData=[], questionOrder=[], currentIndex=0, answered=false, correctCount=0, totalAnswered=0;
+
+async function loadTopoJSON(){
+  const loadEl=document.getElementById('loading-area');
+  const errEl=document.getElementById('error-msg');
+  const svgEl=document.getElementById('silhouette-svg');
+  try{
+    const res=await fetch('./japan.topojson');
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const topo=await res.json();
+
+    const [sx,sy]=topo.transform.scale;
+    const [tx,ty]=topo.transform.translate;
+
+    // arcsを一括デコード（svgtest.htmlと同じ処理）
+    const arcs=topo.arcs.map(arc=>{
+      let x=0,y=0;
+      return arc.map(([dx,dy])=>{ x+=dx; y+=dy; return [x*sx+tx, y*sy+ty]; });
+    });
+
+    // リング解決（svgtest.htmlと同じ処理）
+    function resolveRing(indices){
+      const pts=[];
+      for(const idx of indices){
+        const arc=idx<0?[...arcs[~idx]].reverse():arcs[idx];
+        for(let i=0;i<arc.length;i++) if(i>0||pts.length===0) pts.push(arc[i]);
+      }
+      return pts;
+    }
+
+    // ジオメトリ→リング群（svgtest.htmlと同じ処理）
+    function geomToRings(geom){
+      const rings=[];
+      if(geom.type==='Polygon'){
+        for(const r of geom.arcs) rings.push(resolveRing(r));
+      } else if(geom.type==='MultiPolygon'){
+        for(const poly of geom.arcs) for(const r of poly) rings.push(resolveRing(r));
+      }
+      return rings;
+    }
+
+    // SVGパス＋viewBox生成（svgtest.htmlと同じ処理）
+    function makePathAndViewBox(rings){
+      let minLng=Infinity,maxLng=-Infinity,minLat=Infinity,maxLat=-Infinity;
+      for(const pts of rings){
+        for(const [lng,lat] of pts){
+          if(lng<minLng)minLng=lng; if(lng>maxLng)maxLng=lng;
+          if(lat<minLat)minLat=lat; if(lat>maxLat)maxLat=lat;
+        }
+      }
+      const w=maxLng-minLng, h=maxLat-minLat, pad=Math.max(w,h)*0.05;
+      // svgtest.htmlと全く同じviewBox計算
+      const vb=`${(minLng-pad).toFixed(4)} ${(-(maxLat+pad)).toFixed(4)} ${(w+pad*2).toFixed(4)} ${(h+pad*2).toFixed(4)}`;
+      // svgtest.htmlと全く同じパス生成（y=-lat）
+      const d=rings.map(pts=>{
+        if(pts.length<2) return '';
+        return 'M'+pts.map((p,i)=>(i===0?'':' L')+p[0].toFixed(4)+','+(-(p[1])).toFixed(4)).join('')+'Z';
+      }).join(' ');
+      return {d, viewBox:vb};
+    }
+
+    // 都道府県データ生成
+    prefData=topo.objects.japan.geometries.map(geom=>{
+      const name=(geom.properties||{}).nam_ja||'';
+      if(!name) return null;
+      const rings=geomToRings(geom);
+      if(!rings.length) return null;
+      const {d, viewBox}=makePathAndViewBox(rings);
+      if(!d) return null;
+      return {name, pathStr:d, viewBox};
+    }).filter(Boolean);
+
+    if(!prefData.length) throw new Error('データが0件でした');
+
+    loadEl.style.display='none';
+    svgEl.style.display='';
+    document.getElementById('rs-total').textContent=` / ${prefData.length}`;
+    startQuiz();
+
+  }catch(e){
+    loadEl.style.display='none';
+    errEl.innerHTML=`<strong>⚠️ エラー</strong><br><br>${e.message}<br><br>ページを再読み込みしてください。`;
+    errEl.classList.add('show');
+  }
+}
+
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+
+function startQuiz(){
+  questionOrder=shuffle(prefData.map((_,i)=>i));
+  currentIndex=0; correctCount=0; totalAnswered=0; answered=false;
+  document.getElementById('result-screen').classList.remove('show');
+  document.getElementById('main').style.display='';
+  document.getElementById('score-bar').style.display='';
+  updateScore(); loadQuestion();
+}
+
+function updateScore(){
+  document.getElementById('score-correct').textContent=correctCount;
+  document.getElementById('score-total').textContent=totalAnswered;
+}
+
+function loadQuestion(){
+  answered=false;
+  document.getElementById('next-btn').classList.remove('visible');
+  const fb=document.getElementById('feedback-text');
+  const ar=document.getElementById('answer-reveal');
+  fb.className=''; ar.classList.remove('show'); ar.textContent='';
+
+  const pref=prefData[questionOrder[currentIndex]];
+  const svg=document.getElementById('silhouette-svg');
+  svg.setAttribute('viewBox', pref.viewBox);
+  svg.innerHTML=`<path d="${pref.pathStr}"/>`;
+  svg.className='';
+
+  const correct=pref.name;
+  const wrongs=shuffle(prefData.map(p=>p.name).filter(n=>n!==correct)).slice(0,3);
+  const options=shuffle([correct,...wrongs]);
+
+  document.querySelectorAll('.opt-btn').forEach((btn,i)=>{
+    btn.textContent=options[i]; btn.disabled=false; btn.className='opt-btn';
+    btn.onclick=()=>checkAnswer(options[i],correct,btn);
+  });
+
+  const card=document.getElementById('quiz-card');
+  card.classList.remove('fade-in'); void card.offsetWidth; card.classList.add('fade-in');
+}
+
+function checkAnswer(selected,correct,clickedBtn){
+  if(answered) return;
+  answered=true; totalAnswered++;
+  const isCorrect=selected===correct;
+  if(isCorrect) correctCount++;
+  updateScore();
+
+  const svg=document.getElementById('silhouette-svg');
+  const fb=document.getElementById('feedback-text');
+  const ar=document.getElementById('answer-reveal');
+
+  if(isCorrect){
+    svg.className='correct';
+    fb.textContent='🎉 正解！'; fb.className='correct show';
+    clickedBtn.classList.add('correct-answer');
+  }else{
+    svg.className='wrong';
+    fb.textContent='❌ 不正解…'; fb.className='wrong show';
+    ar.textContent=`正解は「${correct}」`; ar.classList.add('show');
+    clickedBtn.classList.add('wrong-answer');
+  }
+
+  document.querySelectorAll('.opt-btn').forEach(btn=>{
+    btn.disabled=true;
+    if(btn.textContent===correct&&!isCorrect) btn.classList.add('correct-answer');
+    else if(btn!==clickedBtn) btn.classList.add('dimmed');
+  });
+
+  if(currentIndex<prefData.length-1){
+    document.getElementById('next-btn').classList.add('visible');
+  }else{
+    setTimeout(showResult,1400);
+  }
+}
+
+document.getElementById('next-btn').addEventListener('click',()=>{ currentIndex++; loadQuestion(); });
+
+function showResult(){
+  document.getElementById('main').style.display='none';
+  document.getElementById('score-bar').style.display='none';
+  document.getElementById('rs-correct').textContent=correctCount;
+  document.getElementById('rs-total').textContent=` / ${prefData.length}`;
+  const rate=correctCount/prefData.length;
+  document.getElementById('result-emoji').textContent=rate===1?'🏆':rate>=0.8?'🌟':rate>=0.6?'👍':rate>=0.4?'📚':'🗾';
+  document.getElementById('result-msg').textContent=
+    rate===1  ?'完璧です！全問正解、おめでとうございます🎊':
+    rate>=0.8 ?'素晴らしい！地理の知識が豊富ですね🌟':
+    rate>=0.6 ?'よくできました！あと少しで全問正解です💪':
+    rate>=0.4 ?'半分以上正解！地道に練習しましょう📚':
+               '難しかったですね。繰り返し挑戦してみましょう🗾';
+  document.getElementById('result-screen').classList.add('show');
+}
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{ navigator.serviceWorker.register('./service-worker.js').catch(()=>{}); });
+}
+
+loadTopoJSON();
+</script>
+</body>
+</html>
