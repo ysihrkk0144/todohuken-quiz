@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- 背景グラデーション風 -->
+  <rect width="512" height="512" rx="100" fill="#6c63ff"/>
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#a78bfa"/>
+      <stop offset="100%" style="stop-color:#4f46e5"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="100" fill="url(#grad)" opacity="0.6"/>
+
+  <!-- デコレーション：水玉 -->
+  <circle cx="60"  cy="60"  r="40" fill="white" opacity="0.08"/>
+  <circle cx="452" cy="452" r="55" fill="white" opacity="0.08"/>
+  <circle cx="440" cy="80"  r="28" fill="white" opacity="0.08"/>
+  <circle cx="72"  cy="440" r="32" fill="white" opacity="0.08"/>
+
+  <!-- メインテキスト：都道府県 -->
+  <text x="256" y="210"
+    font-family="'Helvetica Neue',Arial,sans-serif"
+    font-size="86" font-weight="900"
+    text-anchor="middle" fill="white" letter-spacing="2"
+  >都道府県</text>
+
+  <!-- アクセントライン -->
+  <rect x="80" y="228" width="352" height="6" rx="3" fill="#ffd93d" opacity="0.9"/>
+
+  <!-- シルエット：白・80px -->
+  <text x="256" y="330"
+    font-family="'Helvetica Neue',Arial,sans-serif"
+    font-size="80" font-weight="900"
+    text-anchor="middle" fill="white" letter-spacing="2"
+  >シルエット</text>
+
+  <!-- クイズ：白・80px（同じサイズ・同じ色） -->
+  <text x="256" y="428"
+    font-family="'Helvetica Neue',Arial,sans-serif"
+    font-size="80" font-weight="900"
+    text-anchor="middle" fill="white" letter-spacing="6"
+  >クイズ</text>
+</svg>
