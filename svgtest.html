@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SVG描画テスト</title>
+<style>
+body{background:#0a1520;color:#e8f0f8;font-family:sans-serif;padding:16px;}
+h2{color:#1db88a;margin-bottom:12px;}
+#log{background:#132438;border-radius:8px;padding:12px;line-height:1.8;word-break:break-all;font-size:13px;margin-bottom:12px;}
+.ok{color:#1db88a;}.err{color:#e05555;}.info{color:#f0a500;}
+.svgbox{width:200px;height:200px;border:2px solid #1db88a;background:#0a1520;display:inline-block;margin:8px;}
+svg{width:100%;height:100%;}
+svg path{fill:#1db88a;}
+</style>
+</head>
+<body>
+<h2>🔍 SVG・TopoJSON描画テスト</h2>
+<div id="log">テスト中...</div>
+<div id="svgs"></div>
+
+<script>
+const log = document.getElementById('log');
+const svgs = document.getElementById('svgs');
+log.textContent = '';
+
+function line(msg, cls='info'){
+  const d=document.createElement('div');
+  d.className=cls; d.textContent=msg; log.appendChild(d);
+}
+
+// テスト1: 固定座標でSVGが描けるか
+line('【テスト1】固定座標SVG描画');
+try {
+  const box = document.createElement('div');
+  box.className = 'svgbox';
+  box.innerHTML = '<svg viewBox="0 0 100 100"><path d="M10,10 L90,10 L90,90 L10,90 Z" fill="#1db88a"/></svg>';
+  svgs.appendChild(box);
+  line('✅ 固定座標SVG: 緑の四角が見えていればOK','ok');
+} catch(e){ line('❌ '+e.message,'err'); }
+
+// テスト2: 日本の経度緯度範囲でSVGが描けるか
+line('【テスト2】経度緯度座標でSVG描画');
+try {
+  // 東京都の大まかな座標（経度139, 緯度35.7付近）
+  // viewBox を経度緯度のまま使い、y=-lat で反転
+  const tokyoLng = 139.7, tokyoLat = 35.7;
+  const box2 = document.createElement('div');
+  box2.className = 'svgbox';
+  // 小さい四角形を東京付近に描く
+  const d = `M${tokyoLng-0.3},${-tokyoLat-0.3} L${tokyoLng+0.3},${-tokyoLat-0.3} L${tokyoLng+0.3},${-tokyoLat+0.3} L${tokyoLng-0.3},${-tokyoLat+0.3} Z`;
+  const vb = `${tokyoLng-0.5} ${-tokyoLat-0.5} 1 1`;
+  box2.innerHTML = `<svg viewBox="${vb}" preserveAspectRatio="xMidYMid meet"><path d="${d}" fill="#1db88a"/></svg>`;
+  svgs.appendChild(box2);
+  line(`viewBox: ${vb}`,'info');
+  line('✅ 経度緯度SVG: 緑の四角が見えていればOK','ok');
+} catch(e){ line('❌ '+e.message,'err'); }
+
+// テスト3: japan.topojsonを読んで最初の都道府県を描画
+line('【テスト3】japan.topojson → 最初の都道府県を描画');
+fetch('./japan.topojson')
+  .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+  .then(topo=>{
+    const [sx,sy] = topo.transform.scale;
+    const [tx,ty] = topo.transform.translate;
+    line(`scale: ${sx.toFixed(6)}, ${sy.toFixed(6)}`);
+    line(`translate: ${tx.toFixed(4)}, ${ty.toFixed(4)}`);
+
+    // 全arcをデコード
+    const arcs = topo.arcs.map(arc=>{
+      let x=0,y=0;
+      return arc.map(([dx,dy])=>{ x+=dx; y+=dy; return [x*sx+tx, y*sy+ty]; });
+    });
+
+    const geoms = topo.objects.japan.geometries;
+    line(`都道府県数: ${geoms.length}件`);
+
+    // 最初の3つの都道府県を描画してみる
+    for(let gi=0; gi<Math.min(3,geoms.length); gi++){
+      const geom = geoms[gi];
+      const name = geom.properties.nam_ja;
+
+      // リング取得
+      const rings=[];
+      if(geom.type==='Polygon'){
+        for(const r of geom.arcs){
+          const pts=[];
+          for(const idx of r){
+            const arc = idx<0?[...arcs[~idx]].reverse():arcs[idx];
+            for(let i=0;i<arc.length;i++) if(i>0||pts.length===0) pts.push(arc[i]);
+          }
+          rings.push(pts);
+        }
+      } else if(geom.type==='MultiPolygon'){
+        for(const poly of geom.arcs){
+          for(const r of poly){
+            const pts=[];
+            for(const idx of r){
+              const arc=idx<0?[...arcs[~idx]].reverse():arcs[idx];
+              for(let i=0;i<arc.length;i++) if(i>0||pts.length===0) pts.push(arc[i]);
+            }
+            rings.push(pts);
+          }
+        }
+      }
+
+      // バウンディングボックス（経度緯度のまま）
+      let minLng=Infinity,maxLng=-Infinity,minLat=Infinity,maxLat=-Infinity;
+      for(const pts of rings) for(const [lng,lat] of pts){
+        if(lng<minLng)minLng=lng; if(lng>maxLng)maxLng=lng;
+        if(lat<minLat)minLat=lat; if(lat>maxLat)maxLat=lat;
+      }
+      const w=maxLng-minLng, h=maxLat-minLat;
+      const pad=Math.max(w,h)*0.05;
+
+      // SVGパス: x=lng, y=-lat（Y軸反転）
+      const d = rings.map(pts=>{
+        if(pts.length<2) return '';
+        return 'M'+pts.map((p,i)=>(i===0?'':' L')+p[0].toFixed(4)+','+(-(p[1])).toFixed(4)).join('')+'Z';
+      }).join(' ');
+
+      // viewBox: xはlng範囲、yは-lat範囲
+      const vb = `${(minLng-pad).toFixed(4)} ${(-(maxLat+pad)).toFixed(4)} ${(w+pad*2).toFixed(4)} ${(h+pad*2).toFixed(4)}`;
+
+      line(`${name}: lng=${minLng.toFixed(2)}〜${maxLng.toFixed(2)}, lat=${minLat.toFixed(2)}〜${maxLat.toFixed(2)}`);
+      line(`viewBox: ${vb}`);
+      line(`パス文字数: ${d.length}文字`);
+
+      const box=document.createElement('div');
+      box.className='svgbox';
+      box.title=name;
+      const label=document.createElement('div');
+      label.style.cssText='color:#1db88a;font-size:11px;text-align:center;margin-top:4px;';
+      label.textContent=name;
+      box.innerHTML=`<svg viewBox="${vb}" preserveAspectRatio="xMidYMid meet"><path d="${d}" fill="#1db88a" opacity="0.85"/></svg>`;
+      box.appendChild(label);
+      svgs.appendChild(box);
+    }
+    line('✅ テスト3完了 → 上の枠に都道府県が表示されていますか？','ok');
+  })
+  .catch(e=>{ line('❌ '+e.message,'err'); });
+</script>
+</body>
+</html>
