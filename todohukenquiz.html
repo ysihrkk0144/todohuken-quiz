@@ -3,154 +3,293 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#0f1923">
+<meta name="theme-color" content="#6c63ff">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>都道府県別シルエットクイズ</title>
 <link rel="manifest" href="manifest.json">
-<link href="https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@400;700&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0a1520;--surface:#0f1e2e;--card:#132438;
-    --accent:#1db88a;--accent2:#f0a500;--wrong:#e05555;
-    --text:#e8f0f8;--muted:#6a8aaa;--border:#1e3a55;
+    --bg:#f0f4ff;
+    --surface:#ffffff;
+    --card:#ffffff;
+    --accent:#6c63ff;
+    --accent2:#ff6b6b;
+    --accent3:#ffd93d;
+    --correct:#06d6a0;
+    --wrong:#ff6b6b;
+    --text:#2d2d48;
+    --muted:#8888aa;
+    --border:#e0e0f0;
+    --shadow:0 4px 24px rgba(108,99,255,0.12);
   }
   *{box-sizing:border-box;margin:0;padding:0;}
-  html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;overflow-x:hidden;}
+  html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;overflow-x:hidden;}
   body{
-    min-height:100vh;
     background:
-      radial-gradient(ellipse at 20% 10%,rgba(29,184,138,0.08) 0%,transparent 60%),
-      radial-gradient(ellipse at 80% 80%,rgba(240,165,0,0.06) 0%,transparent 60%),
-      var(--bg);
+      radial-gradient(ellipse at 10% 0%,rgba(108,99,255,0.10) 0%,transparent 55%),
+      radial-gradient(ellipse at 90% 100%,rgba(255,107,107,0.08) 0%,transparent 55%),
+      #f0f4ff;
   }
-  #app-header{text-align:center;padding:18px 16px 0;}
+
+  /* ヘッダー */
+  #app-header{
+    text-align:center;
+    padding:22px 16px 0;
+    position:relative;
+  }
   #app-title{
-    font-family:'Kaisei Decol',serif;font-size:clamp(1.2rem,5vw,1.7rem);font-weight:700;
-    letter-spacing:.05em;
-    background:linear-gradient(135deg,#1db88a,#4dd4ac,#f0a500);
-    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-    filter:drop-shadow(0 0 12px rgba(29,184,138,0.4));
+    font-family:'Kaisei Decol',serif;
+    font-size:clamp(1.3rem,5.5vw,1.9rem);
+    font-weight:700;
+    letter-spacing:.04em;
+    color:var(--accent);
+    line-height:1.2;
+    text-shadow: 0 2px 12px rgba(108,99,255,0.18);
   }
-  #app-title .icon{font-size:1.3em;margin-right:6px;-webkit-text-fill-color:initial;filter:none;}
-  #score-bar{display:flex;justify-content:flex-start;padding:10px 16px 0;}
+  #app-title .icon{font-size:1.2em;margin-right:6px;}
+
+  /* スコアバー */
+  #score-bar{
+    display:flex;
+    justify-content:flex-start;
+    padding:12px 16px 0;
+  }
   #score-display{
-    background:var(--card);border:1px solid var(--border);border-radius:20px;
-    padding:5px 14px;font-size:.85rem;color:var(--muted);display:flex;align-items:center;gap:6px;
+    background:var(--accent);
+    border-radius:24px;
+    padding:6px 18px;
+    font-size:.85rem;
+    color:#fff;
+    display:flex;
+    align-items:center;
+    gap:5px;
+    box-shadow:0 2px 10px rgba(108,99,255,0.25);
+    font-weight:700;
   }
-  #score-correct{color:var(--accent);font-weight:700;font-size:1rem;}
-  #score-total{color:var(--text);font-weight:700;font-size:1rem;}
-  #score-display .sep{color:var(--border);}
+  #score-correct{font-size:1.1rem;color:var(--accent3);}
+  #score-total{font-size:1.1rem;}
+  #score-display .sep{opacity:.7;}
+  #score-display .label{font-weight:500;font-size:.8rem;opacity:.85;}
+
+  /* メイン */
   #main{
     display:flex;flex-direction:column;align-items:center;
-    padding:10px 16px 24px;gap:12px;max-width:480px;margin:0 auto;
+    padding:12px 16px 32px;gap:14px;
+    max-width:480px;margin:0 auto;
   }
-  #question-heading{font-size:clamp(.85rem,3.5vw,1rem);color:var(--muted);letter-spacing:.03em;text-align:center;}
+
+  /* 見出し */
+  #question-heading{
+    font-size:clamp(.9rem,3.8vw,1.05rem);
+    color:var(--muted);
+    letter-spacing:.03em;
+    text-align:center;
+    font-weight:500;
+  }
+
+  /* クイズカード */
   #quiz-card{
-    width:100%;background:var(--card);border:1px solid var(--border);border-radius:20px;
-    padding:16px;box-shadow:0 8px 32px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.05);
-    position:relative;overflow:hidden;
+    width:100%;
+    background:var(--card);
+    border-radius:24px;
+    padding:18px;
+    box-shadow:var(--shadow);
+    border:2px solid var(--border);
+    position:relative;
+    overflow:hidden;
   }
   #quiz-card::before{
-    content:'';position:absolute;top:0;left:0;right:0;height:2px;
-    background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.6;
+    content:'';position:absolute;top:0;left:0;right:0;height:4px;
+    background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent3));
   }
+
+  /* シルエット枠 */
   #silhouette-frame{
-    width:100%;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;
-    background:rgba(10,21,32,0.6);border-radius:12px;border:1px solid rgba(30,58,85,0.5);
-    position:relative;overflow:hidden;
+    width:100%;aspect-ratio:1/1;
+    display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,#f7f8ff,#eef0ff);
+    border-radius:16px;
+    border:2px solid var(--border);
+    position:relative;
+    overflow:hidden;
   }
-  #silhouette-svg{width:88%;height:88%;display:none;}
+  /* デコレーション水玉 */
+  #silhouette-frame::before{
+    content:'';position:absolute;
+    width:120px;height:120px;
+    border-radius:50%;
+    background:rgba(108,99,255,0.05);
+    top:-30px;right:-30px;
+  }
+  #silhouette-frame::after{
+    content:'';position:absolute;
+    width:80px;height:80px;
+    border-radius:50%;
+    background:rgba(255,107,107,0.05);
+    bottom:-20px;left:-20px;
+  }
+  #silhouette-svg{width:82%;height:82%;display:none;position:relative;z-index:1;}
   #silhouette-svg path{
-    fill:var(--accent);opacity:.85;
-    filter:drop-shadow(0 0 6px rgba(29,184,138,0.5));
-    transition:fill .4s,opacity .4s,filter .4s;
+    fill:var(--accent);
+    opacity:.9;
+    filter:drop-shadow(0 3px 10px rgba(108,99,255,0.35));
+    transition:fill .35s,filter .35s;
   }
-  #silhouette-svg.correct path{fill:var(--accent);opacity:1;filter:drop-shadow(0 0 20px rgba(29,184,138,0.95));}
-  #silhouette-svg.wrong path{fill:var(--wrong);opacity:1;filter:drop-shadow(0 0 18px rgba(224,85,85,0.85));}
+  #silhouette-svg.correct path{
+    fill:var(--correct);
+    filter:drop-shadow(0 3px 16px rgba(6,214,160,0.5));
+  }
+  #silhouette-svg.wrong path{
+    fill:var(--wrong);
+    filter:drop-shadow(0 3px 16px rgba(255,107,107,0.5));
+  }
+
+  /* ローディング */
   #loading-area{
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    display:flex;flex-direction:column;align-items:center;
     gap:12px;padding:30px 0;color:var(--muted);font-size:.88rem;
   }
   #error-msg{color:var(--wrong);font-size:.82rem;text-align:center;padding:20px;line-height:1.7;display:none;}
   #error-msg.show{display:block;}
+
+  /* フィードバック */
   #feedback-area{
-    min-height:40px;display:flex;flex-direction:column;
-    align-items:center;justify-content:center;gap:4px;margin-top:10px;
+    min-height:44px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:4px;margin-top:12px;
   }
   #feedback-text{
-    font-family:'Kaisei Decol',serif;font-size:1.1rem;font-weight:700;text-align:center;
-    opacity:0;transform:translateY(6px);transition:opacity .3s,transform .3s;
+    font-family:'Kaisei Decol',serif;font-size:1.2rem;font-weight:700;
+    text-align:center;letter-spacing:.05em;
+    opacity:0;transform:translateY(8px) scale(.9);
+    transition:opacity .3s,transform .3s;
   }
-  #feedback-text.show{opacity:1;transform:translateY(0);}
-  #feedback-text.correct{color:var(--accent);}
+  #feedback-text.show{opacity:1;transform:translateY(0) scale(1);}
+  #feedback-text.correct{color:var(--correct);}
   #feedback-text.wrong{color:var(--wrong);}
-  #answer-reveal{font-size:.82rem;color:var(--muted);text-align:center;opacity:0;transition:opacity .3s .15s;}
+  #answer-reveal{
+    font-size:.85rem;color:var(--muted);text-align:center;
+    font-weight:500;
+    opacity:0;transition:opacity .3s .15s;
+  }
   #answer-reveal.show{opacity:1;}
+
+  /* 選択肢 */
   #options-grid{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
   .opt-btn{
-    background:var(--surface);border:1.5px solid var(--border);border-radius:12px;
-    color:var(--text);font-family:'Noto Sans JP',sans-serif;
-    font-size:clamp(.85rem,3.5vw,1rem);font-weight:500;
-    padding:14px 8px;cursor:pointer;text-align:center;
-    transition:background .2s,border-color .2s,transform .1s;
-    -webkit-tap-highlight-color:transparent;min-height:52px;
+    background:#fff;
+    border:2.5px solid var(--border);
+    border-radius:16px;
+    color:var(--text);
+    font-family:'Noto Sans JP',sans-serif;
+    font-size:clamp(.88rem,3.8vw,1.05rem);
+    font-weight:700;
+    padding:15px 8px;
+    cursor:pointer;
+    text-align:center;
+    transition:background .18s,border-color .18s,transform .12s,box-shadow .18s;
+    -webkit-tap-highlight-color:transparent;
+    min-height:54px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.06);
+    letter-spacing:.02em;
   }
-  .opt-btn:active{transform:scale(0.97);}
+  .opt-btn:active{transform:scale(0.96);}
+  .opt-btn:not(:disabled):hover{
+    border-color:var(--accent);
+    box-shadow:0 2px 12px rgba(108,99,255,0.18);
+  }
   .opt-btn:disabled{cursor:default;transform:none;}
-  .opt-btn.correct-answer{background:rgba(29,184,138,0.2);border-color:var(--accent);color:var(--accent);box-shadow:0 0 16px rgba(29,184,138,0.25);}
-  .opt-btn.wrong-answer{background:rgba(224,85,85,0.15);border-color:var(--wrong);color:var(--wrong);}
-  .opt-btn.dimmed{opacity:.35;}
+  .opt-btn.correct-answer{
+    background:linear-gradient(135deg,rgba(6,214,160,0.12),rgba(6,214,160,0.05));
+    border-color:var(--correct);color:var(--correct);
+    box-shadow:0 2px 12px rgba(6,214,160,0.25);
+  }
+  .opt-btn.wrong-answer{
+    background:linear-gradient(135deg,rgba(255,107,107,0.10),rgba(255,107,107,0.04));
+    border-color:var(--wrong);color:var(--wrong);
+  }
+  .opt-btn.dimmed{opacity:.32;}
+
+  /* 次へボタン */
   #next-btn{
-    width:100%;background:linear-gradient(135deg,#1db88a,#15976f);
-    border:none;border-radius:14px;color:#fff;
-    font-family:'Kaisei Decol',serif;font-size:1.05rem;font-weight:700;
-    letter-spacing:.08em;padding:16px;cursor:pointer;
-    box-shadow:0 4px 20px rgba(29,184,138,0.35);
-    transition:opacity .2s,transform .15s;display:none;
+    width:100%;
+    background:linear-gradient(135deg,var(--accent),#8b85ff);
+    border:none;border-radius:18px;color:#fff;
+    font-family:'Kaisei Decol',serif;
+    font-size:1.1rem;font-weight:700;
+    letter-spacing:.08em;padding:17px;
+    cursor:pointer;
+    box-shadow:0 4px 18px rgba(108,99,255,0.35);
+    transition:opacity .2s,transform .15s,box-shadow .2s;
+    display:none;
     -webkit-tap-highlight-color:transparent;
   }
   #next-btn:active{transform:scale(0.98);opacity:.9;}
   #next-btn.visible{display:block;}
+
+  /* 結果画面 */
   #result-screen{
-    display:none;flex-direction:column;align-items:center;gap:20px;
-    text-align:center;padding:32px 16px;max-width:480px;margin:0 auto;
+    display:none;flex-direction:column;align-items:center;gap:22px;
+    text-align:center;padding:40px 20px;max-width:480px;margin:0 auto;
   }
   #result-screen.show{display:flex;}
+  #result-emoji{font-size:4rem;line-height:1;}
   #result-title{
-    font-family:'Kaisei Decol',serif;font-size:1.8rem;font-weight:700;
-    background:linear-gradient(135deg,var(--accent),var(--accent2));
-    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    font-family:'Kaisei Decol',serif;font-size:1.9rem;font-weight:700;
+    color:var(--accent);
   }
   #result-score-big{
-    font-family:'Kaisei Decol',serif;font-size:4rem;font-weight:700;
-    color:var(--accent);line-height:1;filter:drop-shadow(0 0 20px rgba(29,184,138,0.5));
+    font-family:'Kaisei Decol',serif;font-size:4.5rem;font-weight:900;
+    color:var(--accent);line-height:1;
+    text-shadow:0 4px 20px rgba(108,99,255,0.25);
   }
-  #result-score-big span{font-size:1.5rem;color:var(--muted);}
-  #result-msg{font-size:1rem;color:var(--muted);line-height:1.6;}
+  #result-score-big span{font-size:1.6rem;color:var(--muted);font-weight:700;}
+  #result-msg{
+    font-size:1rem;color:var(--muted);line-height:1.7;
+    background:#fff;border-radius:16px;padding:14px 20px;
+    border:2px solid var(--border);width:100%;
+  }
   #restart-btn{
-    background:linear-gradient(135deg,var(--accent),#15976f);
-    border:none;border-radius:14px;color:#fff;
-    font-family:'Kaisei Decol',serif;font-size:1.1rem;font-weight:700;
-    letter-spacing:.1em;padding:16px 48px;cursor:pointer;
-    box-shadow:0 4px 24px rgba(29,184,138,0.4);
+    background:linear-gradient(135deg,var(--accent),#8b85ff);
+    border:none;border-radius:18px;color:#fff;
+    font-family:'Kaisei Decol',serif;font-size:1.15rem;font-weight:700;
+    letter-spacing:.1em;padding:17px 52px;
+    cursor:pointer;box-shadow:0 4px 20px rgba(108,99,255,0.35);
     -webkit-tap-highlight-color:transparent;
+    transition:transform .15s,opacity .2s;
   }
-  @keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
-  .fade-in{animation:fadeIn .4s ease both;}
+  #restart-btn:active{transform:scale(0.97);opacity:.9;}
+
+  /* アニメーション */
+  @keyframes fadeInUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+  .fade-in{animation:fadeInUp .35s ease both;}
   @keyframes spin{to{transform:rotate(360deg);}}
-  .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
-  @keyframes pulse-glow{
-    0%,100%{filter:drop-shadow(0 0 6px rgba(29,184,138,0.5));}
-    50%{filter:drop-shadow(0 0 18px rgba(29,184,138,0.9));}
+  .spinner{
+    width:34px;height:34px;
+    border:3px solid var(--border);border-top-color:var(--accent);
+    border-radius:50%;animation:spin .8s linear infinite;
   }
-  #silhouette-svg{animation:pulse-glow 3s ease-in-out infinite;}
+  @keyframes float{
+    0%,100%{filter:drop-shadow(0 3px 10px rgba(108,99,255,0.35));}
+    50%{filter:drop-shadow(0 6px 20px rgba(108,99,255,0.55));}
+  }
+  #silhouette-svg{animation:float 2.8s ease-in-out infinite;}
   #silhouette-svg.correct,#silhouette-svg.wrong{animation:none;}
+
+  /* 番号バッジ */
+  #question-num{
+    font-size:.78rem;font-weight:700;
+    color:var(--accent);
+    background:rgba(108,99,255,0.10);
+    border-radius:20px;padding:3px 12px;
+    letter-spacing:.05em;
+  }
 </style>
 </head>
 <body>
 
 <header id="app-header">
-  <h1 id="app-title"><span class="icon">🗾</span>都道府県別シルエットクイズ</h1>
+  <h1 id="app-title"><span class="icon">🗾</span>都道府県シルエットクイズ</h1>
 </header>
 
 <div id="score-bar">
@@ -178,6 +317,7 @@
       <div id="answer-reveal"></div>
     </div>
   </div>
+
   <div id="options-grid">
     <button class="opt-btn" id="opt0"></button>
     <button class="opt-btn" id="opt1"></button>
@@ -188,253 +328,189 @@
 </main>
 
 <div id="result-screen">
+  <div id="result-emoji">🎉</div>
   <div id="result-title">クイズ終了！</div>
   <div id="result-score-big"><span id="rs-correct">0</span><span id="rs-total"> / 47</span></div>
-  <div id="result-msg"></div>
-  <button id="restart-btn" onclick="startQuiz()">もう一度挑戦する</button>
+  <div id="result-msg" id="result-msg"></div>
+  <button id="restart-btn" onclick="startQuiz()">もう一度挑戦する 🔄</button>
 </div>
 
 <script>
-// ============================================================
-// japan.topojson の確認済み構造：
-//   transform.scale  = [0.003105..., 0.002513...]
-//   transform.translate = [122.933..., 20.422...]
-//   objects.japan.geometries[i].properties = {nam, nam_ja, id}
-//   座標は量子化差分整数 → scale/translateで経度緯度に変換
-//   経度(lng): 122〜154, 緯度(lat): 20〜46
-//   SVGはY軸が下向きなので緯度は反転必要
-// ============================================================
+let prefData=[], questionOrder=[], currentIndex=0, answered=false, correctCount=0, totalAnswered=0;
 
-let prefData = [];
-let questionOrder = [];
-let currentIndex = 0;
-let answered = false;
-let correctCount = 0;
-let totalAnswered = 0;
+async function loadTopoJSON(){
+  const loadEl=document.getElementById('loading-area');
+  const errEl=document.getElementById('error-msg');
+  const svgEl=document.getElementById('silhouette-svg');
+  try{
+    const res=await fetch('./japan.topojson');
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const topo=await res.json();
+    const [sx,sy]=topo.transform.scale;
+    const [tx,ty]=topo.transform.translate;
 
-async function loadTopoJSON() {
-  const loadEl = document.getElementById('loading-area');
-  const errEl  = document.getElementById('error-msg');
-  const svgEl  = document.getElementById('silhouette-svg');
+    // 全arcをデコード（量子化差分座標→経度緯度）
+    const arcs=topo.arcs.map(arc=>{
+      let x=0,y=0;
+      return arc.map(([dx,dy])=>{ x+=dx; y+=dy; return [x*sx+tx, y*sy+ty]; });
+    });
 
-  try {
-    const res = await fetch('./japan.topojson');
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const topo = await res.json();
-
-    const sx = topo.transform.scale[0];
-    const sy = topo.transform.scale[1];
-    const tx = topo.transform.translate[0];
-    const ty = topo.transform.translate[1];
-
-    // 量子化差分座標 → 経度・緯度
-    // 各arcは差分値の配列。累積和してからscale/translateで実座標へ
-    function decodeArc(arc) {
-      let x = 0, y = 0;
-      return arc.map(([dx, dy]) => {
-        x += dx; y += dy;
-        // lng = x*sx + tx, lat = y*sy + ty
-        return [x * sx + tx, y * sy + ty];
-      });
-    }
-
-    // 全arcをデコード（一度だけ）
-    const arcs = topo.arcs.map(decodeArc);
-
-    // アーク番号リスト → 座標列
-    function resolveRing(indices) {
-      const pts = [];
-      for (const idx of indices) {
-        const arc = idx < 0 ? [...arcs[~idx]].reverse() : arcs[idx];
-        for (let i = 0; i < arc.length; i++) {
-          if (i > 0 || pts.length === 0) pts.push(arc[i]);
-        }
+    function resolveRing(indices){
+      const pts=[];
+      for(const idx of indices){
+        const arc=idx<0?[...arcs[~idx]].reverse():arcs[idx];
+        for(let i=0;i<arc.length;i++) if(i>0||pts.length===0) pts.push(arc[i]);
       }
       return pts;
     }
 
-    // ジオメトリ → 座標リング群（経度・緯度）
-    function geomToRings(geom) {
-      const rings = [];
-      if (geom.type === 'Polygon') {
-        for (const r of geom.arcs) rings.push(resolveRing(r));
-      } else if (geom.type === 'MultiPolygon') {
-        for (const poly of geom.arcs) for (const r of poly) rings.push(resolveRing(r));
-      }
+    function geomToRings(geom){
+      const rings=[];
+      if(geom.type==='Polygon') for(const r of geom.arcs) rings.push(resolveRing(r));
+      else if(geom.type==='MultiPolygon') for(const poly of geom.arcs) for(const r of poly) rings.push(resolveRing(r));
       return rings;
     }
 
-    // 経度・緯度リング → SVGパス
-    // lng → x（そのまま）, lat → y（反転：大きいlatが上＝小さいy）
-    // viewBox単位は経度・緯度のまま使用し、Y軸だけ反転
-    function makePathAndViewBox(rings) {
-      // バウンディングボックス
-      let minLng=Infinity, maxLng=-Infinity, minLat=Infinity, maxLat=-Infinity;
-      for (const pts of rings) {
-        for (const [lng, lat] of pts) {
-          if (lng < minLng) minLng = lng; if (lng > maxLng) maxLng = lng;
-          if (lat < minLat) minLat = lat; if (lat > maxLat) maxLat = lat;
-        }
+    function makePathAndViewBox(rings){
+      let minLng=Infinity,maxLng=-Infinity,minLat=Infinity,maxLat=-Infinity;
+      for(const pts of rings) for(const [lng,lat] of pts){
+        if(lng<minLng)minLng=lng; if(lng>maxLng)maxLng=lng;
+        if(lat<minLat)minLat=lat; if(lat>maxLat)maxLat=lat;
       }
-      const w = maxLng - minLng, h = maxLat - minLat;
-      const pad = Math.max(w, h) * 0.06;
-
-      // SVGのviewBox: x=minLng-pad, y=-(maxLat+pad), width=w+pad*2, height=h+pad*2
-      // Y軸反転: lat → -lat （SVGはY軸下向きなので緯度を負にすれば北が上）
-      const vbX = (minLng - pad).toFixed(4);
-      const vbY = (-(maxLat + pad)).toFixed(4);
-      const vbW = (w + pad * 2).toFixed(4);
-      const vbH = (h + pad * 2).toFixed(4);
-      const viewBox = `${vbX} ${vbY} ${vbW} ${vbH}`;
-
-      // パス生成（lat を -lat に）
-      const d = rings.map(pts => {
-        if (pts.length < 2) return '';
-        return 'M' + pts.map((p, i) =>
-          (i===0?'':' L') + p[0].toFixed(4) + ',' + (-p[1]).toFixed(4)
-        ).join('') + 'Z';
+      const w=maxLng-minLng, h=maxLat-minLat, pad=Math.max(w,h)*0.06;
+      const vb=`${(minLng-pad).toFixed(4)} ${(-(maxLat+pad)).toFixed(4)} ${(w+pad*2).toFixed(4)} ${(h+pad*2).toFixed(4)}`;
+      const d=rings.map(pts=>{
+        if(pts.length<2) return '';
+        return 'M'+pts.map((p,i)=>(i===0?'':' L')+p[0].toFixed(4)+','+(-(p[1])).toFixed(4)).join('')+'Z';
       }).join(' ');
-
-      return { d, viewBox };
+      return {d, viewBox:vb};
     }
 
-    // 都道府県ごとにデータ生成
-    const geoms = topo.objects.japan.geometries;
-    prefData = geoms.map(geom => {
-      const p = geom.properties;
-      const name = p.nam_ja || '';
-      if (!name) return null;
-      const rings = geomToRings(geom);
-      if (rings.length === 0) return null;
-      const { d, viewBox } = makePathAndViewBox(rings);
-      return { name, pathStr: d, viewBox };
+    prefData=topo.objects.japan.geometries.map(geom=>{
+      const name=(geom.properties||{}).nam_ja||'';
+      if(!name) return null;
+      const rings=geomToRings(geom);
+      if(!rings.length) return null;
+      const {d,viewBox}=makePathAndViewBox(rings);
+      if(!d) return null;
+      return {name, pathStr:d, viewBox};
     }).filter(Boolean);
 
-    if (prefData.length === 0) throw new Error('データが0件でした');
-
-    loadEl.style.display = 'none';
-    svgEl.style.display = '';
-    document.getElementById('rs-total').textContent = ` / ${prefData.length}`;
+    if(!prefData.length) throw new Error('データが0件でした');
+    loadEl.style.display='none';
+    svgEl.style.display='';
+    document.getElementById('rs-total').textContent=` / ${prefData.length}`;
     startQuiz();
-
-  } catch(e) {
-    loadEl.style.display = 'none';
-    errEl.innerHTML = `<strong>⚠️ エラー</strong><br><br>${e.message}<br><br>ページを再読み込みしてください。`;
+  }catch(e){
+    loadEl.style.display='none';
+    errEl.innerHTML=`<strong>⚠️ エラー</strong><br><br>${e.message}<br><br>ページを再読み込みしてください。`;
     errEl.classList.add('show');
   }
 }
 
-// ── ゲームロジック ─────────────────────────────
-function shuffle(arr) {
-  const a = [...arr];
-  for (let i = a.length-1; i > 0; i--) {
-    const j = Math.floor(Math.random()*(i+1));
-    [a[i],a[j]] = [a[j],a[i]];
-  }
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
   return a;
 }
 
-function startQuiz() {
-  questionOrder = shuffle(prefData.map((_,i)=>i));
+function startQuiz(){
+  questionOrder=shuffle(prefData.map((_,i)=>i));
   currentIndex=0; correctCount=0; totalAnswered=0; answered=false;
   document.getElementById('result-screen').classList.remove('show');
   document.getElementById('main').style.display='';
   document.getElementById('score-bar').style.display='';
-  updateScore();
-  loadQuestion();
+  updateScore(); loadQuestion();
 }
 
-function updateScore() {
-  document.getElementById('score-correct').textContent = correctCount;
-  document.getElementById('score-total').textContent = totalAnswered;
+function updateScore(){
+  document.getElementById('score-correct').textContent=correctCount;
+  document.getElementById('score-total').textContent=totalAnswered;
 }
 
-function loadQuestion() {
-  answered = false;
+function loadQuestion(){
+  answered=false;
   document.getElementById('next-btn').classList.remove('visible');
-  const fb = document.getElementById('feedback-text');
-  const ar = document.getElementById('answer-reveal');
+  const fb=document.getElementById('feedback-text');
+  const ar=document.getElementById('answer-reveal');
   fb.className=''; ar.classList.remove('show'); ar.textContent='';
 
-  const pref = prefData[questionOrder[currentIndex]];
-  const svg  = document.getElementById('silhouette-svg');
-  svg.setAttribute('viewBox', pref.viewBox);
-  svg.innerHTML = `<path d="${pref.pathStr}"/>`;
-  svg.className = '';
+  const pref=prefData[questionOrder[currentIndex]];
+  const svg=document.getElementById('silhouette-svg');
+  svg.setAttribute('viewBox',pref.viewBox);
+  svg.innerHTML=`<path d="${pref.pathStr}"/>`;
+  svg.className='';
 
-  const correct = pref.name;
-  const wrongs  = shuffle(prefData.map(p=>p.name).filter(n=>n!==correct)).slice(0,3);
-  const options = shuffle([correct,...wrongs]);
+  const correct=pref.name;
+  const wrongs=shuffle(prefData.map(p=>p.name).filter(n=>n!==correct)).slice(0,3);
+  const options=shuffle([correct,...wrongs]);
 
-  document.querySelectorAll('.opt-btn').forEach((btn,i) => {
-    btn.textContent = options[i];
-    btn.disabled = false;
-    btn.className = 'opt-btn';
-    btn.onclick = () => checkAnswer(options[i], correct, btn);
+  document.querySelectorAll('.opt-btn').forEach((btn,i)=>{
+    btn.textContent=options[i]; btn.disabled=false; btn.className='opt-btn';
+    btn.onclick=()=>checkAnswer(options[i],correct,btn);
   });
 
-  const card = document.getElementById('quiz-card');
+  const card=document.getElementById('quiz-card');
   card.classList.remove('fade-in'); void card.offsetWidth; card.classList.add('fade-in');
 }
 
-function checkAnswer(selected, correct, clickedBtn) {
-  if (answered) return;
+function checkAnswer(selected,correct,clickedBtn){
+  if(answered) return;
   answered=true; totalAnswered++;
-  const isCorrect = selected===correct;
-  if (isCorrect) correctCount++;
+  const isCorrect=selected===correct;
+  if(isCorrect) correctCount++;
   updateScore();
 
-  const svg = document.getElementById('silhouette-svg');
-  const fb  = document.getElementById('feedback-text');
-  const ar  = document.getElementById('answer-reveal');
+  const svg=document.getElementById('silhouette-svg');
+  const fb=document.getElementById('feedback-text');
+  const ar=document.getElementById('answer-reveal');
 
-  if (isCorrect) {
+  if(isCorrect){
     svg.className='correct';
     fb.textContent='🎉 正解！'; fb.className='correct show';
     clickedBtn.classList.add('correct-answer');
-  } else {
+  }else{
     svg.className='wrong';
     fb.textContent='❌ 不正解…'; fb.className='wrong show';
     ar.textContent=`正解は「${correct}」`; ar.classList.add('show');
     clickedBtn.classList.add('wrong-answer');
   }
 
-  document.querySelectorAll('.opt-btn').forEach(btn => {
+  document.querySelectorAll('.opt-btn').forEach(btn=>{
     btn.disabled=true;
-    if (btn.textContent===correct && !isCorrect) btn.classList.add('correct-answer');
-    else if (btn!==clickedBtn) btn.classList.add('dimmed');
+    if(btn.textContent===correct&&!isCorrect) btn.classList.add('correct-answer');
+    else if(btn!==clickedBtn) btn.classList.add('dimmed');
   });
 
-  if (currentIndex < prefData.length-1) {
+  if(currentIndex<prefData.length-1){
     document.getElementById('next-btn').classList.add('visible');
-  } else {
-    setTimeout(showResult, 1400);
+  }else{
+    setTimeout(showResult,1400);
   }
 }
 
-document.getElementById('next-btn').addEventListener('click', ()=>{currentIndex++;loadQuestion();});
+document.getElementById('next-btn').addEventListener('click',()=>{ currentIndex++; loadQuestion(); });
 
-function showResult() {
+function showResult(){
   document.getElementById('main').style.display='none';
   document.getElementById('score-bar').style.display='none';
   document.getElementById('rs-correct').textContent=correctCount;
   document.getElementById('rs-total').textContent=` / ${prefData.length}`;
   const rate=correctCount/prefData.length;
+  const emoji = rate===1?'🏆':rate>=0.8?'🌟':rate>=0.6?'👍':rate>=0.4?'📚':'🗾';
+  document.getElementById('result-emoji').textContent=emoji;
   document.getElementById('result-msg').textContent=
-    rate===1    ?'完璧です！全問正解、おめでとうございます🎊':
-    rate>=0.8   ?'素晴らしい！地理の知識が豊富ですね🌟':
-    rate>=0.6   ?'よくできました！あと少しで全問正解です💪':
-    rate>=0.4   ?'半分以上正解！地道に練習しましょう📚':
-                 '難しかったですね。繰り返し挑戦してみましょう🗾';
+    rate===1  ?'完璧です！全問正解、おめでとうございます🎊':
+    rate>=0.8 ?'素晴らしい！地理の知識が豊富ですね🌟':
+    rate>=0.6 ?'よくできました！あと少しで全問正解です💪':
+    rate>=0.4 ?'半分以上正解！地道に練習しましょう📚':
+               '難しかったですね。繰り返し挑戦してみましょう🗾';
   document.getElementById('result-screen').classList.add('show');
 }
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
-  });
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{ navigator.serviceWorker.register('./service-worker.js').catch(()=>{}); });
 }
-
 loadTopoJSON();
 </script>
 </body>
