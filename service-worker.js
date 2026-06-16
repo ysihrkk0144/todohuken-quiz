@@ -1,6 +1,6 @@
-const CACHE_NAME = 'kenquiz-v1';
+const CACHE_NAME = 'kenquiz-v2';
 const ASSETS = [
-  './todohukenquiz.html',
+  './index.html',
   './manifest.json',
   './service-worker.js',
   './japan.topojson',
