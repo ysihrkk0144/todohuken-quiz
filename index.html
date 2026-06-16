@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>都道府県シルエットクイズ</title>
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon.svg">
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
   html,body{min-height:100%;color:#2d2d48;overflow-x:hidden;}
@@ -166,6 +166,8 @@
 </head>
 <body>
 
+<div id="offlinebanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:999;background:#06d6a0;color:#fff;text-align:center;padding:10px;font-size:.85rem;font-weight:700;"></div>
+
 <div id="header"><span class="icon">🗾</span>都道府県シルエットクイズ</div>
 
 <div id="score">
@@ -209,9 +211,32 @@
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {
     navigator.serviceWorker.register('./service-worker.js')
-      .then(function (reg) { console.log('SW registered:', reg.scope); })
+      .then(function (reg) {
+        console.log('SW registered:', reg.scope);
+        // 新しいSWがインストール完了したらバナーで通知
+        reg.addEventListener('updatefound', function () {
+          var newWorker = reg.installing;
+          newWorker.addEventListener('statechange', function () {
+            if (newWorker.state === 'activated') {
+              showOfflineBanner('✅ オフライン対応完了！次回から機内モードでも動きます');
+            }
+          });
+        });
+        // すでにアクティブなSWがあればすぐ通知
+        if (reg.active) {
+          showOfflineBanner('✅ オフライン対応済み');
+        }
+      })
       .catch(function (err) { console.warn('SW registration failed:', err); });
   });
+}
+
+function showOfflineBanner(msg) {
+  var b = document.getElementById('offlinebanner');
+  if (!b) return;
+  b.textContent = msg;
+  b.style.display = 'block';
+  setTimeout(function () { b.style.display = 'none'; }, 3000);
 }
 
 var prefs = [], order = [], idx = 0, answered = false, correct = 0, total = 0;
