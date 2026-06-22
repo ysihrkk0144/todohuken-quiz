@@ -4,7 +4,7 @@
 // 更新はページ側の「最新版を確認」ボタンからのみ開始される。
 // ============================================================
 
-const CACHE_NAME = 'kenquiz-cache-v1';
+const CACHE_NAME = 'kenquiz-cache-v2';
 
 // キャッシュ対象（service-worker.js自体は含めない）
 const ASSETS = [
@@ -29,7 +29,10 @@ async function cacheWithRetry(cache, path, maxRetry) {
 
   for (let attempt = 1; attempt <= maxRetry; attempt++) {
     try {
-      const response = await fetch(fullUrl, { cache: 'no-store' });
+      // 奇数回目はno-store、偶数回目はデフォルト（no-storeがモバイルで
+      // 不安定な場合のフォールバックとして交互に試す）
+      const fetchOptions = (attempt % 2 === 1) ? { cache: 'no-store' } : {};
+      const response = await fetch(fullUrl, fetchOptions);
       if (!response.ok) {
         throw new Error('HTTP ' + response.status);
       }
@@ -40,7 +43,7 @@ async function cacheWithRetry(cache, path, maxRetry) {
       console.warn('[SW] キャッシュ取得失敗(' + attempt + '/' + maxRetry + '回目): ' + path, err);
     }
   }
-  return { path: path, ok: false, error: lastError ? lastError.message : 'unknown', attempt: maxRetry };
+  return { path: path, ok: false, error: lastError ? (lastError.message || String(lastError)) : 'unknown', attempt: maxRetry };
 }
 
 // ---- 全クライアントへ通知 ----
@@ -70,20 +73,22 @@ self.addEventListener('install', function (event) {
       });
 
       const successCount = summary.filter(function (s) { return s.ok; }).length;
-      const failedFiles = summary.filter(function (s) { return !s.ok; }).map(function (s) { return s.path; });
+      const failedDetails = summary.filter(function (s) { return !s.ok; }).map(function (s) {
+        return s.path + ' → ' + (s.error || 'unknown error');
+      });
 
       console.log('[SW] install完了: 成功 ' + successCount + '/' + EXPECTED_COUNT);
-      if (failedFiles.length) {
-        console.warn('[SW] 失敗ファイル:', failedFiles);
+      if (failedDetails.length) {
+        console.warn('[SW] 失敗詳細:', failedDetails);
       }
 
       await notifyAllClients({
         type: 'INSTALL_RESULT',
         cacheName: CACHE_NAME,
         successCount: successCount,
-        failedCount: failedFiles.length,
+        failedCount: failedDetails.length,
         expectedCount: EXPECTED_COUNT,
-        failedFiles: failedFiles
+        failedFiles: failedDetails
       });
 
       // ★ skipWaiting() はここで呼ばない（手動更新方式のため）

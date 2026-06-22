@@ -341,6 +341,9 @@
     <div class="diagSection">■ キャッシュ済みURL一覧</div>
     <div class="diagUrlList" id="dUrlList">（未取得）</div>
 
+    <div class="diagSection">■ 直近のinstall結果詳細</div>
+    <div class="diagUrlList" id="dInstallDetail">（install未実行）</div>
+
   </div>
   <div class="diagBtnRow">
     <button id="diagRefresh">🔄 再取得</button>
@@ -353,6 +356,7 @@
    状態管理
 ============================================================ */
 var swRegistration = null;
+var lastInstallResult = null;
 
 /* ============================================================
    結果バナー表示
@@ -397,6 +401,7 @@ if ('serviceWorker' in navigator) {
     var data = event.data || {};
 
     if (data.type === 'INSTALL_RESULT') {
+      lastInstallResult = data;
       if (data.failedCount === 0) {
         showResultBanner('✅ オフライン準備完了！ (' + data.successCount + '/' + data.expectedCount + '件)', 'ok');
       } else {
@@ -512,6 +517,21 @@ function refreshDiagnostic() {
     document.getElementById('dCacheName').textContent = '(controller無し・取得不可)';
     document.getElementById('dCacheCount').textContent = '-';
     document.getElementById('dUrlList').textContent = '（controllerが無いため取得できません。一度ページを再読込してください）';
+  }
+
+  // install失敗詳細の表示
+  var detailEl = document.getElementById('dInstallDetail');
+  if (!lastInstallResult) {
+    detailEl.textContent = '（このページ読み込みではinstallイベントが発火していません＝既にキャッシュ済みの可能性）';
+  } else if (lastInstallResult.failedCount === 0) {
+    detailEl.textContent = '✅ 全' + lastInstallResult.expectedCount + '件成功（エラーなし）';
+  } else {
+    detailEl.textContent = '';
+    lastInstallResult.failedFiles.forEach(function (line) {
+      var div = document.createElement('div');
+      div.textContent = '❌ ' + line;
+      detailEl.appendChild(div);
+    });
   }
 }
 
