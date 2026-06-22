@@ -6,7 +6,8 @@
 <meta name="theme-color" content="#6c63ff">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>都道府県シルエットクイズ</title>
+<meta name="apple-mobile-web-app-title" content="都道府県クイズ">
+<title>都道府県クイズ</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.svg">
 <style>
@@ -19,9 +20,41 @@
       radial-gradient(ellipse at 90% 100%,rgba(255,107,107,.09) 0%,transparent 55%),
       #f0f4ff;
     min-height:100vh;
+    padding-bottom:90px;
   }
 
-  /* ヘッダー */
+  /* ===== 結果通知バナー（インストール結果） ===== */
+  #resultbanner{
+    display:none;position:fixed;top:0;left:0;right:0;z-index:1000;
+    padding:11px 44px 11px 16px;font-size:.85rem;font-weight:700;
+    text-align:center;color:#fff;line-height:1.5;
+  }
+  #resultbanner.ok{background:#06d6a0;}
+  #resultbanner.warn{background:#ff9f43;}
+  #resultbanner .closeBtn{
+    position:absolute;right:10px;top:50%;transform:translateY(-50%);
+    background:none;border:none;color:#fff;font-size:1.1rem;
+    cursor:pointer;padding:4px 8px;-webkit-tap-highlight-color:transparent;
+  }
+
+  /* ===== 更新確認バナー ===== */
+  #updatebanner{
+    display:none;position:fixed;bottom:0;left:0;right:0;z-index:1000;
+    background:#2d2d48;color:#fff;padding:14px 16px;
+    box-shadow:0 -4px 16px rgba(0,0,0,.2);
+    align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  }
+  #updatebanner.show{display:flex;}
+  #updatebanner .msg{font-size:.88rem;font-weight:700;flex:1;min-width:140px;}
+  #updatebanner button{
+    border:none;border-radius:10px;padding:8px 14px;
+    font-size:.82rem;font-weight:700;cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+  }
+  #updatebanner .doUpdate{background:#06d6a0;color:#fff;}
+  #updatebanner .later{background:#4a4a68;color:#fff;}
+
+  /* ===== ヘッダー ===== */
   #header{
     text-align:center;padding:20px 16px 0;
     font-size:clamp(1.3rem,5.5vw,1.8rem);
@@ -160,15 +193,88 @@
   @keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
   .fadein{animation:fadeUp .35s ease both;}
 
+  /* ===== 診断パネル ===== */
+  #diagFab{
+    position:fixed;right:16px;bottom:16px;z-index:900;
+    width:50px;height:50px;border-radius:50%;
+    background:#2d2d48;color:#fff;border:none;
+    font-size:1.3rem;cursor:pointer;
+    box-shadow:0 4px 14px rgba(0,0,0,.25);
+    display:flex;align-items:center;justify-content:center;
+    -webkit-tap-highlight-color:transparent;
+  }
+  #diagPanel{
+    display:none;position:fixed;inset:0;z-index:1100;
+    background:#161625;color:#e8e8f8;
+    overflow-y:auto;
+    font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+    font-size:.78rem;line-height:1.6;
+  }
+  #diagPanel.show{display:block;}
+  #diagHeader{
+    position:sticky;top:0;background:#1f1f33;
+    padding:14px 16px;display:flex;align-items:center;
+    justify-content:space-between;border-bottom:1px solid #33334d;
+  }
+  #diagHeader h3{font-size:.95rem;color:#fff;font-family:-apple-system,sans-serif;}
+  #diagClose{
+    background:none;border:none;color:#fff;font-size:1.3rem;
+    cursor:pointer;padding:4px 10px;-webkit-tap-highlight-color:transparent;
+  }
+  #diagBody{padding:14px 16px 100px;}
+  .diagRow{
+    display:flex;justify-content:space-between;gap:10px;
+    padding:8px 0;border-bottom:1px solid #26263a;flex-wrap:wrap;
+  }
+  .diagRow .k{color:#9999bb;flex-shrink:0;}
+  .diagRow .v{color:#e8e8f8;text-align:right;word-break:break-all;}
+  .diagRow .v.good{color:#06d6a0;font-weight:700;}
+  .diagRow .v.bad{color:#ff6b6b;font-weight:700;background:rgba(255,107,107,.12);padding:2px 8px;border-radius:6px;}
+  .diagSection{
+    margin-top:18px;color:#8b8bff;font-weight:700;
+    font-family:-apple-system,sans-serif;font-size:.85rem;
+  }
+  .diagUrlList{
+    margin-top:8px;background:#1f1f33;border-radius:8px;
+    padding:10px 12px;max-height:200px;overflow-y:auto;
+  }
+  .diagUrlList div{padding:3px 0;color:#aaaacc;word-break:break-all;}
+  .diagBtnRow{
+    position:fixed;left:0;right:0;bottom:0;
+    background:#1f1f33;padding:12px 16px;
+    display:flex;gap:10px;border-top:1px solid #33334d;
+  }
+  .diagBtnRow button{
+    flex:1;border:none;border-radius:10px;padding:12px 8px;
+    font-size:.82rem;font-weight:700;cursor:pointer;
+    font-family:-apple-system,sans-serif;
+    -webkit-tap-highlight-color:transparent;
+  }
+  #diagRefresh{background:#6c63ff;color:#fff;}
+  #diagUpdateCheck{background:#06d6a0;color:#fff;}
+
   /* 下部余白 */
   #footer{height:24px;}
 </style>
 </head>
 <body>
 
-<div id="offlinebanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:999;background:#06d6a0;color:#fff;text-align:center;padding:10px;font-size:.85rem;font-weight:700;"></div>
+<!-- インストール結果バナー -->
+<div id="resultbanner">
+  <span id="resultbannerText"></span>
+  <button class="closeBtn" id="resultbannerClose">✕</button>
+</div>
 
-<div id="header"><span class="icon">🗾</span>都道府県シルエットクイズ</div>
+<!-- 更新確認バナー -->
+<div id="updatebanner">
+  <span class="msg">🆕 新しいバージョンがあります</span>
+  <div>
+    <button class="doUpdate" id="doUpdateBtn">更新する</button>
+    <button class="later" id="laterBtn">あとで</button>
+  </div>
+</div>
+
+<div id="header"><span class="icon">🗾</span>都道府県クイズ</div>
 
 <div id="score">
   <span>正答数</span>
@@ -206,39 +312,232 @@
 
 <div id="footer"></div>
 
+<!-- 診断パネル起動ボタン -->
+<button id="diagFab" title="診断パネル">🔧</button>
+
+<!-- 診断パネル -->
+<div id="diagPanel">
+  <div id="diagHeader">
+    <h3>🔧 診断パネル</h3>
+    <button id="diagClose">✕</button>
+  </div>
+  <div id="diagBody">
+
+    <div class="diagSection">■ 基本情報</div>
+    <div class="diagRow"><span class="k">現在のURL</span><span class="v" id="dUrl">-</span></div>
+    <div class="diagRow"><span class="k">SW対応有無</span><span class="v" id="dSupport">-</span></div>
+
+    <div class="diagSection">■ Service Worker登録状態</div>
+    <div class="diagRow"><span class="k">登録scope</span><span class="v" id="dScope">-</span></div>
+    <div class="diagRow"><span class="k">active</span><span class="v" id="dActive">-</span></div>
+    <div class="diagRow"><span class="k">waiting</span><span class="v" id="dWaiting">-</span></div>
+    <div class="diagRow"><span class="k">installing</span><span class="v" id="dInstalling">-</span></div>
+    <div class="diagRow"><span class="k">controller</span><span class="v" id="dController">-</span></div>
+
+    <div class="diagSection">■ キャッシュ状態</div>
+    <div class="diagRow"><span class="k">SWバージョン(CACHE_NAME)</span><span class="v" id="dCacheName">-</span></div>
+    <div class="diagRow"><span class="k">キャッシュ済み件数 / 期待件数</span><span class="v" id="dCacheCount">-</span></div>
+
+    <div class="diagSection">■ キャッシュ済みURL一覧</div>
+    <div class="diagUrlList" id="dUrlList">（未取得）</div>
+
+  </div>
+  <div class="diagBtnRow">
+    <button id="diagRefresh">🔄 再取得</button>
+    <button id="diagUpdateCheck">🌐 最新版を確認</button>
+  </div>
+</div>
+
 <script>
-// PWA：Service Worker登録（外部ファイル方式）
+/* ============================================================
+   状態管理
+============================================================ */
+var swRegistration = null;
+
+/* ============================================================
+   結果バナー表示
+============================================================ */
+function showResultBanner(text, type) {
+  var b = document.getElementById('resultbanner');
+  b.textContent = '';
+  var span = document.createElement('span');
+  span.id = 'resultbannerText';
+  span.textContent = text;
+  var closeBtn = document.createElement('button');
+  closeBtn.className = 'closeBtn';
+  closeBtn.id = 'resultbannerClose';
+  closeBtn.textContent = '✕';
+  closeBtn.onclick = function () { b.style.display = 'none'; };
+  b.appendChild(span);
+  b.appendChild(closeBtn);
+  b.className = type === 'ok' ? 'ok' : 'warn';
+  b.style.display = 'block';
+  setTimeout(function () { b.style.display = 'none'; }, 4000);
+}
+
+/* ============================================================
+   Service Worker 初回登録
+============================================================ */
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function () {
-    navigator.serviceWorker.register('./service-worker.js')
-      .then(function (reg) {
-        console.log('SW registered:', reg.scope);
-        // 新しいSWがインストール完了したらバナーで通知
-        reg.addEventListener('updatefound', function () {
-          var newWorker = reg.installing;
-          newWorker.addEventListener('statechange', function () {
-            if (newWorker.state === 'activated') {
-              showOfflineBanner('✅ オフライン対応完了！次回から機内モードでも動きます');
-            }
-          });
-        });
-        // すでにアクティブなSWがあればすぐ通知
-        if (reg.active) {
-          showOfflineBanner('✅ オフライン対応済み');
-        }
-      })
-      .catch(function (err) { console.warn('SW registration failed:', err); });
+  navigator.serviceWorker.register('./service-worker.js', {
+    scope: './',
+    updateViaCache: 'none'
+  }).then(function (reg) {
+    swRegistration = reg;
+    console.log('[Page] SW registered. scope=' + reg.scope);
+    setupUpdateWatcher(reg);
+    refreshDiagnostic();
+  }).catch(function (err) {
+    console.warn('[Page] SW registration failed:', err);
+    refreshDiagnostic();
+  });
+
+  // SWからのpostMessageを受信
+  navigator.serviceWorker.addEventListener('message', function (event) {
+    var data = event.data || {};
+
+    if (data.type === 'INSTALL_RESULT') {
+      if (data.failedCount === 0) {
+        showResultBanner('✅ オフライン準備完了！ (' + data.successCount + '/' + data.expectedCount + '件)', 'ok');
+      } else {
+        showResultBanner('⚠️ 一部未保存 (' + data.successCount + '/' + data.expectedCount + '件、失敗' + data.failedCount + '件)', 'warn');
+      }
+      refreshDiagnostic();
+    }
+
+    if (data.type === 'ACTIVATE_RESULT') {
+      refreshDiagnostic();
+    }
+
+    if (data.type === 'DIAGNOSTIC_RESULT') {
+      renderDiagnostic(data);
+    }
+  });
+
+  // controllerが切り替わったらリロード（更新時のみ発生）
+  var reloadingAfterUpdate = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function () {
+    if (reloadingAfterUpdate) return;
+    reloadingAfterUpdate = true;
+    window.location.reload();
   });
 }
 
-function showOfflineBanner(msg) {
-  var b = document.getElementById('offlinebanner');
-  if (!b) return;
-  b.textContent = msg;
-  b.style.display = 'block';
-  setTimeout(function () { b.style.display = 'none'; }, 3000);
+/* ============================================================
+   手動更新フロー
+============================================================ */
+function setupUpdateWatcher(reg) {
+  reg.addEventListener('updatefound', function () {
+    var newWorker = reg.installing;
+    if (!newWorker) return;
+    newWorker.addEventListener('statechange', function () {
+      if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+        // 新バージョンのインストールが完了 → 更新確認バナー表示
+        document.getElementById('updatebanner').classList.add('show');
+      }
+    });
+  });
 }
 
+document.getElementById('doUpdateBtn').onclick = function () {
+  if (swRegistration && swRegistration.waiting) {
+    swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+  }
+  document.getElementById('updatebanner').classList.remove('show');
+};
+
+document.getElementById('laterBtn').onclick = function () {
+  document.getElementById('updatebanner').classList.remove('show');
+};
+
+function manualUpdateCheck() {
+  if (!swRegistration) {
+    alert('Service Workerが未登録です');
+    return;
+  }
+  swRegistration.update().then(function () {
+    console.log('[Page] update()チェック完了');
+  }).catch(function (err) {
+    console.warn('[Page] update()失敗:', err);
+    alert('更新確認に失敗しました（オフラインの可能性があります）');
+  });
+}
+
+/* ============================================================
+   診断パネル
+============================================================ */
+document.getElementById('diagFab').onclick = function () {
+  document.getElementById('diagPanel').classList.add('show');
+  refreshDiagnostic();
+};
+document.getElementById('diagClose').onclick = function () {
+  document.getElementById('diagPanel').classList.remove('show');
+};
+document.getElementById('diagRefresh').onclick = refreshDiagnostic;
+document.getElementById('diagUpdateCheck').onclick = manualUpdateCheck;
+
+function refreshDiagnostic() {
+  document.getElementById('dUrl').textContent = location.href;
+  document.getElementById('dSupport').textContent = ('serviceWorker' in navigator) ? '対応' : '非対応';
+
+  if (!('serviceWorker' in navigator)) return;
+
+  navigator.serviceWorker.getRegistration('./').then(function (reg) {
+    if (!reg) {
+      document.getElementById('dScope').textContent = '未登録';
+      document.getElementById('dActive').textContent = '-';
+      document.getElementById('dWaiting').textContent = '-';
+      document.getElementById('dInstalling').textContent = '-';
+      return;
+    }
+    document.getElementById('dScope').textContent = reg.scope;
+    document.getElementById('dActive').textContent = reg.active ? (reg.active.state + ' ✓') : 'なし';
+    document.getElementById('dWaiting').textContent = reg.waiting ? (reg.waiting.state + ' (更新待機中)') : 'なし';
+    document.getElementById('dInstalling').textContent = reg.installing ? reg.installing.state : 'なし';
+  });
+
+  var controllerEl = document.getElementById('dController');
+  if (navigator.serviceWorker.controller) {
+    controllerEl.textContent = 'あり ✓';
+    controllerEl.className = 'v good';
+  } else {
+    controllerEl.textContent = 'なし（要再読込 or 未登録）';
+    controllerEl.className = 'v bad';
+  }
+
+  // SWにキャッシュ診断を依頼
+  if (navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({ type: 'GET_DIAGNOSTIC' });
+  } else {
+    document.getElementById('dCacheName').textContent = '(controller無し・取得不可)';
+    document.getElementById('dCacheCount').textContent = '-';
+    document.getElementById('dUrlList').textContent = '（controllerが無いため取得できません。一度ページを再読込してください）';
+  }
+}
+
+function renderDiagnostic(data) {
+  document.getElementById('dCacheName').textContent = data.cacheName;
+
+  var countEl = document.getElementById('dCacheCount');
+  countEl.textContent = data.cachedCount + ' / ' + data.expectedCount;
+  countEl.className = (data.cachedCount === data.expectedCount) ? 'v good' : 'v bad';
+
+  var listEl = document.getElementById('dUrlList');
+  listEl.textContent = '';
+  if (!data.urls.length) {
+    listEl.textContent = '（キャッシュ無し）';
+  } else {
+    data.urls.forEach(function (u) {
+      var div = document.createElement('div');
+      div.textContent = u;
+      listEl.appendChild(div);
+    });
+  }
+}
+
+/* ============================================================
+   都道府県シルエットクイズ ロジック
+============================================================ */
 var prefs = [], order = [], idx = 0, answered = false, correct = 0, total = 0;
 
 fetch('./japan.topojson')
@@ -286,7 +585,6 @@ fetch('./japan.topojson')
         for (var i = 0; i < geom.arcs.length; i++) rs.push(ring(geom.arcs[i]));
       } else if (geom.type === 'MultiPolygon') {
         if (name === '東京都') {
-          // 東京都：最大面積（本州部分）のみ
           var best = null, bestArea = 0;
           for (var i = 0; i < geom.arcs.length; i++) {
             var outerPts = ring(geom.arcs[i][0]);
@@ -297,7 +595,6 @@ fetch('./japan.topojson')
             for (var j = 0; j < geom.arcs[best].length; j++) rs.push(ring(geom.arcs[best][j]));
           }
         } else {
-          // それ以外：全ポリゴン使用
           for (var i = 0; i < geom.arcs.length; i++) {
             for (var j = 0; j < geom.arcs[i].length; j++) rs.push(ring(geom.arcs[i][j]));
           }
