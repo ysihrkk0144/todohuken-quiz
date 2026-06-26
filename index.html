@@ -450,6 +450,13 @@ if ('serviceWorker' in navigator) {
    手動更新フロー
 ============================================================ */
 function setupUpdateWatcher(reg) {
+  // ケース1：ページロード時点で既にwaitingにSWがいる場合
+  // （前回までのアクセスでinstallが完了済みのケース）→ 即座にバナー表示
+  if (reg.waiting) {
+    document.getElementById('updatebanner').classList.add('show');
+  }
+
+  // ケース2：これからinstallが始まる場合（update()呼び出し後など）
   reg.addEventListener('updatefound', function () {
     var newWorker = reg.installing;
     if (!newWorker) return;
@@ -478,10 +485,34 @@ function manualUpdateCheck() {
     alert('Service Workerが未登録です');
     return;
   }
+
+  // すでにwaitingにSWがいる場合は、それを即座に通知する
+  if (swRegistration.waiting) {
+    document.getElementById('updatebanner').classList.add('show');
+    return;
+  }
+
+  var btn = document.getElementById('diagUpdateCheck');
+  var originalText = btn.textContent;
+  btn.textContent = '確認中…';
+  btn.disabled = true;
+
   swRegistration.update().then(function () {
     console.log('[Page] update()チェック完了');
+    btn.textContent = originalText;
+    btn.disabled = false;
+    // update()後すぐにwaitingが立つとは限らないため少し待って再確認
+    setTimeout(function () {
+      if (swRegistration.waiting) {
+        document.getElementById('updatebanner').classList.add('show');
+      } else {
+        alert('現在のバージョンが最新です。更新はありません。');
+      }
+    }, 800);
   }).catch(function (err) {
     console.warn('[Page] update()失敗:', err);
+    btn.textContent = originalText;
+    btn.disabled = false;
     alert('更新確認に失敗しました（オフラインの可能性があります）');
   });
 }
