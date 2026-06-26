@@ -245,12 +245,13 @@
     display:flex;gap:10px;border-top:1px solid #33334d;
   }
   .diagBtnRow button{
-    flex:1;border:none;border-radius:10px;padding:12px 8px;
-    font-size:.82rem;font-weight:700;cursor:pointer;
+    flex:1;border:none;border-radius:10px;padding:12px 6px;
+    font-size:.72rem;font-weight:700;cursor:pointer;
     font-family:-apple-system,sans-serif;
     -webkit-tap-highlight-color:transparent;
   }
   #diagRefresh{background:#6c63ff;color:#fff;}
+  #diagCacheNow{background:#ffd93d;color:#2d2d48;}
   #diagUpdateCheck{background:#06d6a0;color:#fff;}
 
   /* 下部余白 */
@@ -326,6 +327,7 @@
     <div class="diagSection">■ 基本情報</div>
     <div class="diagRow"><span class="k">現在のURL</span><span class="v" id="dUrl">-</span></div>
     <div class="diagRow"><span class="k">SW対応有無</span><span class="v" id="dSupport">-</span></div>
+    <div class="diagRow"><span class="k">ストレージ永続化</span><span class="v" id="dPersist">-</span></div>
 
     <div class="diagSection">■ Service Worker登録状態</div>
     <div class="diagRow"><span class="k">登録scope</span><span class="v" id="dScope">-</span></div>
@@ -346,7 +348,8 @@
 
   </div>
   <div class="diagBtnRow">
-    <button id="diagRefresh">🔄 再取得</button>
+    <button id="diagRefresh">🔄 表示を更新</button>
+    <button id="diagCacheNow">📥 キャッシュ取得</button>
     <button id="diagUpdateCheck">🌐 最新版を確認</button>
   </div>
 </div>
@@ -383,6 +386,19 @@ function showResultBanner(text, type) {
    Service Worker 初回登録
 ============================================================ */
 if ('serviceWorker' in navigator) {
+  // ストレージの永続化をリクエスト（ブラウザによる自動キャッシュ削除を防ぐ）
+  if (navigator.storage && navigator.storage.persist) {
+    navigator.storage.persisted().then(function (already) {
+      if (already) {
+        console.log('[Page] ストレージは既に永続化されています');
+      } else {
+        navigator.storage.persist().then(function (granted) {
+          console.log('[Page] ストレージ永続化リクエスト結果:', granted);
+        });
+      }
+    });
+  }
+
   navigator.serviceWorker.register('./service-worker.js', {
     scope: './',
     updateViaCache: 'none'
@@ -480,10 +496,45 @@ document.getElementById('diagClose').onclick = function () {
 };
 document.getElementById('diagRefresh').onclick = refreshDiagnostic;
 document.getElementById('diagUpdateCheck').onclick = manualUpdateCheck;
+document.getElementById('diagCacheNow').onclick = manualCacheNow;
+
+function manualCacheNow() {
+  if (!('serviceWorker' in navigator)) {
+    alert('このブラウザはService Workerに対応していません');
+    return;
+  }
+  if (!navigator.serviceWorker.controller) {
+    alert('controllerが無いため実行できません。一度ページを再読込してください。');
+    return;
+  }
+  var btn = document.getElementById('diagCacheNow');
+  var originalText = btn.textContent;
+  btn.textContent = '取得中…';
+  btn.disabled = true;
+
+  navigator.serviceWorker.controller.postMessage({ type: 'CACHE_NOW' });
+
+  // INSTALL_RESULTメッセージが届いたらrefreshDiagnosticが走るので、
+  // ボタンの表示は一定時間後に元に戻す
+  setTimeout(function () {
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }, 2500);
+}
 
 function refreshDiagnostic() {
   document.getElementById('dUrl').textContent = location.href;
   document.getElementById('dSupport').textContent = ('serviceWorker' in navigator) ? '対応' : '非対応';
+
+  var persistEl = document.getElementById('dPersist');
+  if (navigator.storage && navigator.storage.persisted) {
+    navigator.storage.persisted().then(function (granted) {
+      persistEl.textContent = granted ? '許可済み ✓（自動削除されにくい）' : '未許可（ブラウザに自動削除される恐れあり）';
+      persistEl.className = granted ? 'v good' : 'v bad';
+    });
+  } else {
+    persistEl.textContent = '非対応ブラウザ';
+  }
 
   if (!('serviceWorker' in navigator)) return;
 
@@ -524,7 +575,7 @@ function refreshDiagnostic() {
   if (!lastInstallResult) {
     detailEl.textContent = '（このページ読み込みではinstallイベントが発火していません＝既にキャッシュ済みの可能性）';
   } else if (lastInstallResult.failedCount === 0) {
-    detailEl.textContent = '✅ 全' + lastInstallResult.expectedCount + '件成功（エラーなし）';
+    detailEl.textContent = '✅ 全' + lastInstallResult.expectedCount + '件成功（' + (lastInstallResult.source === 'manual' ? '手動取得' : '自動install') + '・エラーなし）';
   } else {
     detailEl.textContent = '';
     lastInstallResult.failedFiles.forEach(function (line) {

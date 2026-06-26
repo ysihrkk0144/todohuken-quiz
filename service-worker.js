@@ -4,7 +4,7 @@
 // 更新はページ側の「最新版を確認」ボタンからのみ開始される。
 // ============================================================
 
-const CACHE_NAME = 'kenquiz-cache-v2';
+const CACHE_NAME = 'kenquiz-cache-v4';
 
 // キャッシュ対象（service-worker.js自体は含めない）
 const ASSETS = [
@@ -54,45 +54,48 @@ async function notifyAllClients(message) {
   });
 }
 
+// ---- キャッシュ実行本体（installイベント・手動再取得の両方から呼ばれる） ----
+async function performCaching(sourceLabel) {
+  const cache = await caches.open(CACHE_NAME);
+
+  const results = await Promise.allSettled(
+    ASSETS.map(function (path) {
+      return cacheWithRetry(cache, path, MAX_RETRY);
+    })
+  );
+
+  const summary = results.map(function (r) {
+    return r.status === 'fulfilled' ? r.value : { ok: false, error: 'rejected' };
+  });
+
+  const successCount = summary.filter(function (s) { return s.ok; }).length;
+  const failedDetails = summary.filter(function (s) { return !s.ok; }).map(function (s) {
+    return s.path + ' → ' + (s.error || 'unknown error');
+  });
+
+  console.log('[SW] キャッシュ実行完了(' + sourceLabel + '): 成功 ' + successCount + '/' + EXPECTED_COUNT);
+  if (failedDetails.length) {
+    console.warn('[SW] 失敗詳細:', failedDetails);
+  }
+
+  await notifyAllClients({
+    type: 'INSTALL_RESULT',
+    cacheName: CACHE_NAME,
+    successCount: successCount,
+    failedCount: failedDetails.length,
+    expectedCount: EXPECTED_COUNT,
+    failedFiles: failedDetails,
+    source: sourceLabel
+  });
+}
+
 // ============================================================
 // install イベント
 // ============================================================
 self.addEventListener('install', function (event) {
   event.waitUntil(
-    (async function () {
-      const cache = await caches.open(CACHE_NAME);
-
-      const results = await Promise.allSettled(
-        ASSETS.map(function (path) {
-          return cacheWithRetry(cache, path, MAX_RETRY);
-        })
-      );
-
-      const summary = results.map(function (r) {
-        return r.status === 'fulfilled' ? r.value : { ok: false, error: 'rejected' };
-      });
-
-      const successCount = summary.filter(function (s) { return s.ok; }).length;
-      const failedDetails = summary.filter(function (s) { return !s.ok; }).map(function (s) {
-        return s.path + ' → ' + (s.error || 'unknown error');
-      });
-
-      console.log('[SW] install完了: 成功 ' + successCount + '/' + EXPECTED_COUNT);
-      if (failedDetails.length) {
-        console.warn('[SW] 失敗詳細:', failedDetails);
-      }
-
-      await notifyAllClients({
-        type: 'INSTALL_RESULT',
-        cacheName: CACHE_NAME,
-        successCount: successCount,
-        failedCount: failedDetails.length,
-        expectedCount: EXPECTED_COUNT,
-        failedFiles: failedDetails
-      });
-
-      // ★ skipWaiting() はここで呼ばない（手動更新方式のため）
-    })()
+    performCaching('install')
+    // ★ skipWaiting() はここで呼ばない（手動更新方式のため）
   );
 });
 
@@ -211,6 +214,13 @@ self.addEventListener('message', function (event) {
 
   if (data.type === 'SKIP_WAITING') {
     self.skipWaiting();
+    return;
+  }
+
+  if (data.type === 'CACHE_NOW') {
+    // ページ側の「手動でキャッシュ再取得」ボタンから呼ばれる。
+    // installと全く同じロジックでキャッシュし直す。
+    event.waitUntil(performCaching('manual'));
     return;
   }
 });
