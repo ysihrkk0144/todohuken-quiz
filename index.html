@@ -360,6 +360,7 @@
 ============================================================ */
 var swRegistration = null;
 var lastInstallResult = null;
+var cacheNowResultHandler = function () {};
 
 /* ============================================================
    結果バナー表示
@@ -418,6 +419,7 @@ if ('serviceWorker' in navigator) {
 
     if (data.type === 'INSTALL_RESULT') {
       lastInstallResult = data;
+      if (typeof cacheNowResultHandler === 'function') cacheNowResultHandler(data);
       if (data.failedCount === 0) {
         showResultBanner('✅ オフライン準備完了！ (' + data.successCount + '/' + data.expectedCount + '件)', 'ok');
       } else {
@@ -512,14 +514,20 @@ function manualCacheNow() {
   btn.textContent = '取得中…';
   btn.disabled = true;
 
+  var responded = false;
+  var prevHandler = cacheNowResultHandler;
+  cacheNowResultHandler = function () { responded = true; };
+
   navigator.serviceWorker.controller.postMessage({ type: 'CACHE_NOW' });
 
-  // INSTALL_RESULTメッセージが届いたらrefreshDiagnosticが走るので、
-  // ボタンの表示は一定時間後に元に戻す
   setTimeout(function () {
     btn.textContent = originalText;
     btn.disabled = false;
-  }, 2500);
+    cacheNowResultHandler = prevHandler;
+    if (!responded) {
+      alert('応答がありませんでした。現在のSWバージョンが古く、この機能(CACHE_NOW)に対応していない可能性があります。\n\n「🌐 最新版を確認」→「更新する」で最新版に切り替えてから再度お試しください。');
+    }
+  }, 3000);
 }
 
 function refreshDiagnostic() {

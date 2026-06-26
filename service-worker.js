@@ -4,7 +4,7 @@
 // 更新はページ側の「最新版を確認」ボタンからのみ開始される。
 // ============================================================
 
-const CACHE_NAME = 'kenquiz-cache-v4';
+const CACHE_NAME = 'kenquiz-cache-v5';
 
 // キャッシュ対象（service-worker.js自体は含めない）
 const ASSETS = [
